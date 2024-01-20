@@ -1,0 +1,18 @@
+a 'k' regular graph of order n is one in which all vertices have the same amount of edges (or the same degree)
+    k = number of edges for each node to have
+    n = the number of nodes in the graph
+
+the registry deals with connections by first deciding how to connect, then messaging those nodes that they need to connect to those other nodes
+    if registry messages node A to connect to node B, that message will contain the address of node B, so that a socket can be spawned
+    node B will also be messaged to connect to node A 
+
+
+upon reading the assignment sheet it looks like message types are simply denoted by integers 
+    diff integers correspond to diff message types!
+
+
+
+
+receiver receives a message, then it determines the type, passes that into to the factory 
+which spawns an Event of the correct tpye, all wireformats have the interface so you can call like getBytes
+setBytes and whatever -> yay you can parse messages now!!!
