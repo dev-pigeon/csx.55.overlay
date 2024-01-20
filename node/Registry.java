@@ -22,8 +22,8 @@ public class Registry {
         port = Integer.parseInt(args[0]);
 
         initiateServerSocket();
-        serverAddress = serverSocket.getInetAddress();
-        System.out.println("port: " + serverSocket.getLocalPort() + " address: " + serverAddress);
+        serverAddress = InetAddress.getLocalHost();
+        System.out.println("port: " + serverSocket.getLocalPort() + " address: " + serverAddress.getHostAddress());
 
        
         InputHandler inputHanlder = new InputHandler();
@@ -31,7 +31,7 @@ public class Registry {
         inputHandlerThread.start();
 
         
-        TCPServerThread serverListener = new TCPServerThread(port, socketList);
+        TCPServerThread serverListener = new TCPServerThread(serverSocket,socketList);
         Thread tcpServerThread = new Thread(serverListener,"TCPServerThread");
         tcpServerThread.start();
 

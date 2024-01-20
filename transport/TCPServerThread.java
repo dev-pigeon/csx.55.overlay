@@ -7,22 +7,13 @@ import java.util.ArrayList;
 
 public class TCPServerThread implements Runnable {
     //this will be spawned by both entities and will simply be the listener of connections (not sure how itll work like addding things lmao)
-    int serverPort;
+    
     ServerSocket serverSocket;
     ArrayList<Socket> socketList = new ArrayList<>();
 
-    public TCPServerThread(int portNumber, ArrayList<Socket> socketList) {
-        this.serverPort = portNumber;
+    public TCPServerThread(ServerSocket serverSocket, ArrayList<Socket> socketList) {
+        this.serverSocket = serverSocket;
         this.socketList = socketList;
-        initializeServerSocket();
-    }
-
-    private void initializeServerSocket() {
-        try {
-            serverSocket = new ServerSocket(serverPort);
-        } catch(IOException ioe) {
-            System.out.println(ioe.getMessage());
-        }
     }
 
     @Override
@@ -37,6 +28,7 @@ public class TCPServerThread implements Runnable {
         Socket socket = null;
         try {
             socket = serverSocket.accept();
+            System.out.println("a connection has been accepted!");
         } catch(IOException ioe) {
             System.out.println(ioe.getMessage());
         }

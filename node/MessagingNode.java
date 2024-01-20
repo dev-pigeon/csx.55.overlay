@@ -24,25 +24,27 @@ public class MessagingNode {
     //fields for socket programming
     private static ServerSocket serverSocket;
     private static InetAddress serverAddress;
-    private static ArrayList<Connection> links = new ArrayList<>();
 
     private static InetAddress regInetAddress;
     private static int registryPort;
     private static Socket registrySocket;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         initiateServerSocket();
         
 
         regInetAddress = InetAddress.getByName(args[0]);
+        System.out.println(regInetAddress);
         registryPort = Integer.parseInt(args[1]);
         registrySocket = new Socket(regInetAddress, registryPort);
 
+        System.out.println("Connected!");
+
         InputHandler inputHanlder = new InputHandler();
-        Thread inputHandlerThread = new Thread("Input handler Thread");
+        Thread inputHandlerThread = new Thread(inputHanlder,"Input handler Thread");
         inputHandlerThread.start();
-        //create a new sender and receiver thread
         
+        inputHandlerThread.join();
         
         
 

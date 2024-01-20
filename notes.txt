@@ -16,3 +16,8 @@ upon reading the assignment sheet it looks like message types are simply denoted
 receiver receives a message, then it determines the type, passes that into to the factory 
 which spawns an Event of the correct tpye, all wireformats have the interface so you can call like getBytes
 setBytes and whatever -> yay you can parse messages now!!!
+
+
+javac node/*.java
+javac transport/*.java
+javac util/*.java
