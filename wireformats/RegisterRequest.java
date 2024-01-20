@@ -8,6 +8,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+/* note
+ * this will only go to the REGISTRY
+ */
+
 public class RegisterRequest implements Event { 
     int type = 0;
     String ipAddress;
@@ -38,6 +42,8 @@ public class RegisterRequest implements Event {
 
         baInputStream.close();
         din.close();
+
+        
     }
 
     @Override
@@ -91,6 +97,10 @@ public class RegisterRequest implements Event {
         } catch(IOException ioe) {
             System.out.println(ioe.getMessage());
         }
+    }
+
+    public int showType() {
+        return type;
     }
 
     

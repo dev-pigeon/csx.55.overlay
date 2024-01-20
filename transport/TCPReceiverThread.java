@@ -10,6 +10,8 @@ import java.util.Arrays;
 
 import wireformats.Protocol;
 import wireformats.Protocol.messageType;
+import wireformats.EventFactory;
+import wireformats.Event;
 
 public class TCPReceiverThread implements Runnable {
 
@@ -35,12 +37,11 @@ public class TCPReceiverThread implements Runnable {
                 int type = readType(marshallCopy);
                 
                 messageType msgType = Protocol.getMessageType(type);
+
+                Event event = EventFactory.spawnEvent(msgType);
+                //get the bytes and stuff, the event will handle the rest
+                event.getBytes(marshalledData); //itll take care of itself!
                 
-                //read the type of the data from the marhalledData 
-                //pass that into protocol
-                //then create right type of event with the event factory
-
-
             } catch(SocketException se) {
                 System.out.println(se.getMessage());
                 break;

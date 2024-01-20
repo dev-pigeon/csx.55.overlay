@@ -3,7 +3,10 @@ package node;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
+
+import util.InputHandler;
 
 /* TODO - now DONE
  * declare fields for network connection
@@ -23,15 +26,29 @@ public class MessagingNode {
     private static InetAddress serverAddress;
     private static ArrayList<Connection> links = new ArrayList<>();
 
-    public static void main(String[] args) {
+    private static InetAddress regInetAddress;
+    private static int registryPort;
+    private static Socket registrySocket;
+
+    public static void main(String[] args) throws IOException {
         initiateServerSocket();
-        serverAddress = serverSocket.getInetAddress();
-        //start a sender thread
-        //start a receiver thread
-        //request registry
+        
+
+        regInetAddress = InetAddress.getByName(args[0]);
+        registryPort = Integer.parseInt(args[1]);
+        registrySocket = new Socket(regInetAddress, registryPort);
+
+        InputHandler inputHanlder = new InputHandler();
+        Thread inputHandlerThread = new Thread("Input handler Thread");
+        inputHandlerThread.start();
+        //create a new sender and receiver thread
+        
+        
+        
+
     }
 
-    private static void initiateServerSocket() { //tested and works for both cases
+    private static void initiateServerSocket() { 
         boolean found = false;
         int initialPort = 8080;
         while(!found) {
