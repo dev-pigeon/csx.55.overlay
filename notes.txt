@@ -7,15 +7,17 @@ the registry deals with connections by first deciding how to connect, then messa
     node B will also be messaged to connect to node A 
 
 
-upon reading the assignment sheet it looks like message types are simply denoted by integers 
-    diff integers correspond to diff message types!
+
+
+            pseudo for start command in da server
 
 
 
 
-receiver receives a message, then it determines the type, passes that into to the factory 
-which spawns an Event of the correct tpye, all wireformats have the interface so you can call like getBytes
-setBytes and whatever -> yay you can parse messages now!!!
+tcp server protocol 
+ all this does is wait for socket connections
+ as soon as a socket has connected, a TCPReceiverThread is spawned 
+    
 
 
 javac node/*.java

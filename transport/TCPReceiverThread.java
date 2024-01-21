@@ -4,23 +4,34 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import wireformats.Protocol;
 import wireformats.Protocol.messageType;
 import wireformats.EventFactory;
 import wireformats.Event;
+import node.*;
 
 public class TCPReceiverThread implements Runnable {
 
     private Socket socket;
     private DataInputStream din;
+    private ArrayList<RegisteredNode> registeredNodes;
+    private String owner;//this is my like denothing thing for now
+    //it will eventually change to the object for dikjstra
+    private String originIP;
 
-    public TCPReceiverThread(Socket socket) throws IOException {
+    public TCPReceiverThread(Socket socket, ArrayList<RegisteredNode> registeredNodes, String owner) throws IOException {
         this.socket = socket;
-        din = new DataInputStream(socket.getInputStream());
+        din = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+        originIP = socket.getInetAddress().getHostAddress();
+        this.registeredNodes = registeredNodes;
+        this.owner = owner;
     }
 
     @Override
@@ -38,9 +49,12 @@ public class TCPReceiverThread implements Runnable {
                 
                 messageType msgType = Protocol.getMessageType(type);
 
-                Event event = EventFactory.spawnEvent(msgType);
+                Event event = EventFactory.spawnEvent(msgType); //may need to pass the socket into the event so you can like, send stuff back
+                
                 //get the bytes and stuff, the event will handle the rest
-                event.getBytes(marshalledData); //itll take care of itself!
+                event.getBytes(marshalledData); 
+                //call handle event based on the type that it is
+                event.handleEvent(registeredNodes, owner);
                 
             } catch(SocketException se) {
                 System.out.println(se.getMessage());
@@ -53,7 +67,7 @@ public class TCPReceiverThread implements Runnable {
         throw new UnsupportedOperationException("Unimplemented method 'run'");
     }
 
-    public int readType(byte[] marshalledMessage) throws IOException {
+    public static int readType(byte[] marshalledMessage) throws IOException {
 
         //in this we are going to read the type and return that shit son
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledMessage);

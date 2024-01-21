@@ -7,6 +7,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+
+import node.*;
 
 /* note
  * this will only go to the REGISTRY
@@ -14,7 +17,7 @@ import java.io.IOException;
 
 public class RegisterRequest implements Event { 
     int type = 0;
-    String ipAddress;
+    public String ipAddress;
     int portNumber;
     
     public RegisterRequest() {
@@ -32,18 +35,28 @@ public class RegisterRequest implements Event {
 
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
-        type = getType(marshalledMessage);
+        type = din.readInt();
+
+        System.out.println("type = " + type);
 
         int IPLength = din.readInt();
+        
+
+        System.out.println("IP Length in get bytes = " + IPLength);
+        
+
         byte[] IPbytes = new byte[IPLength];
         din.readFully(IPbytes);
+        //set string ip to this
+        ipAddress = new String(IPbytes);
 
         portNumber = din.readInt();
 
         baInputStream.close();
         din.close();
 
-        
+        System.out.println("request info, port: " + portNumber + " ip: " + ipAddress);
+
     }
 
     @Override
@@ -67,11 +80,16 @@ public class RegisterRequest implements Event {
         DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
 
         //write the type first since that is the order wwe will demarshall
-        writeIntField(dout, type);
+        dout.writeInt(type);
         //then write the IP
-        writeIP(dout);
+        byte[] ipBytes = ipAddress.getBytes();
+        int elemLength = ipBytes.length;
+        System.out.println("writing ip length as = " + elemLength);
+        dout.writeInt(elemLength);
+        dout.write(ipBytes);
+       
         //finally write the port number
-        writeIntField(dout, portNumber);
+        dout.writeInt(portNumber);
         dout.flush();
         marhalledData = baOutputStream.toByteArray();
 
@@ -80,28 +98,16 @@ public class RegisterRequest implements Event {
         return marhalledData;  
     }
 
-    private void writeIntField(DataOutputStream dout, int field) {
-        try {
-            dout.writeInt(field);
-        } catch(IOException ioe) {
-            System.out.println(ioe.getMessage());
-        }
-    }
-
-    private void writeIP(DataOutputStream dout) {
-        try {
-            byte[] ipBytes = ipAddress.getBytes();
-            int elemLength = ipBytes.length;
-            dout.writeInt(elemLength);
-            dout.write(ipBytes);
-        } catch(IOException ioe) {
-            System.out.println(ioe.getMessage());
-        }
-    }
-
     public int showType() {
         return type;
     }
 
-    
+    @Override
+    public void handleEvent(ArrayList<RegisteredNode> registreredNodes, String owner) {
+        if(owner.trim().equals("Registry")) {
+            //
+        } else {
+            MessagingNode.printHell();
+        }
+    }    
 }
