@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import javax.xml.crypto.Data;
 
 import node.RegisteredNode;
-import wireformats.RegisterRequest;
+import wireformats.*;
 import node.*;
 
 
@@ -21,6 +21,8 @@ public class TCPServerThread implements Runnable {
     ArrayList<RegisteredNode> registeredNodes;
     //need a field for owner tpe
     private String owner;
+
+    TCPSender sender;
 
     boolean accepted = false;
 
@@ -35,30 +37,29 @@ public class TCPServerThread implements Runnable {
         while(true) {
            Socket socket = acceptConnections();
            try {
+
              readRegistrationEvent(socket);
+
              if(accepted) {
+
                 System.out.println("a messaging node was sucessfully registered");
-                RegisteredNode node = new RegisteredNode(socket, registeredNodes, owner);
+                
+                RegisteredNode node = new RegisteredNode(socket, owner);
                 addToList(node);
+                //call generate response message
+                sender = new TCPSender(socket);
+                String responseInfo = "Registration request successful. Then number of nodes currently in the overlay is (" + registeredNodes.size() + ")";
+                generateReponse(responseInfo, accepted);
                 accepted = false;
              } else {
-                //write the error message man
+                sender = new TCPSender(socket);
+                String response = "ERROR: Invalid registration credentials";
+                generateReponse(response, false);
              }
-        } catch (IOException e) {
+            } catch (IOException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-
-        
-            //the registered node will handle itself, it will create a listening thread to wait for mesasges from whoever its connected to
-            
-           //immediately create a registerednode and put in the list
-           //whenever a request for registration is received, you can check for error
-           //if there is a mismatch, you the registered node will remove itself from the list
-           //if its just a dupe request, you send msg saying cant register again, already registered
-           
-           //this works for the messaging nodes too
+                e.printStackTrace();
+            }
         }
     }
 
@@ -82,7 +83,7 @@ public class TCPServerThread implements Runnable {
     private RegisteredNode createRegisteredNode(Socket socket) {
         RegisteredNode registeredNode = null;
         try {
-            registeredNode = new RegisteredNode(socket,registeredNodes, owner);
+            registeredNode = new RegisteredNode(socket, owner);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -93,8 +94,6 @@ public class TCPServerThread implements Runnable {
     private void readRegistrationEvent(Socket socket) throws IOException {
         //the "origin IP" for that check can be gotten from this socket
         //i think?
-
-        
         DataInputStream din = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
         String socketIP = socket.getInetAddress().getHostAddress();
 
@@ -103,32 +102,41 @@ public class TCPServerThread implements Runnable {
         din.readFully(marshalledData,0,length);
         System.out.println("Server thread: bytes have been read fully with length = " + length);
         System.out.println(marshalledData);
-
         //we dint need the type 
         RegisterRequest request = new RegisterRequest();
         //then get the bytes
         request.getBytes(marshalledData);
-
         //examine the data
         if(owner.equals("Registry")) {
             //check if it is a mismatch
             if(!request.ipAddress.equals(socketIP)) {
-                System.out.println("ERROR MISMATCH IN IP");
+                //call generate response message
                 return;
                  
             } else {
                 for(int i = 0; i < registeredNodes.size(); ++i) {
-                    if(registeredNodes.get(i).ipAddress.equals(request.ipAddress)) {
-                        System.out.println("ERROR ALREADY REGISTERED");
+                    if((registeredNodes.get(i).ipAddress.equals(request.ipAddress)) && registeredNodes.get(i).portNumber == socket.getPort()) {
                         return;
                     }
                 }
-            }
-            System.out.println("made it past registration screening");
-           
+            }           
         } else { //case of messaging node receiving connection from other messaging nodes
-            //we gonna write that laters
+            
         }
         accepted = true;  
+    }
+
+    private void generateReponse(String message, boolean success) throws IOException {
+        System.out.println("sending response message");
+        RegisterResponse registerResponse = null;
+        if(success) {
+            registerResponse = new RegisterResponse((byte)1, message);
+        } else {
+            registerResponse = new RegisterResponse((byte)0, message);
+        }
+
+        byte[] marshalledMessage = registerResponse.setBytes();
+        sender.sendData(marshalledMessage);
+
     }
 }

@@ -37,9 +37,15 @@ public class Registry {
     private static InetAddress serverAddress;
     private static ServerSocket serverSocket;
   
-    protected static ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
+    public static ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
     public static void main(String[] args) throws IOException, InterruptedException {
        
+       Registry registry = new Registry();
+       registry.start(args);
+        
+    }
+
+    private void start(String[] args) throws InterruptedException, UnknownHostException {
         port = Integer.parseInt(args[0]);
 
         initiateServerSocket();
@@ -47,18 +53,16 @@ public class Registry {
         System.out.println("port: " + serverSocket.getLocalPort() + " address: " + serverAddress.getHostAddress());
 
        
-        InputHandler inputHanlder = new InputHandler();
-        Thread inputHandlerThread = new Thread(inputHanlder,"Input handler Thread");
-        inputHandlerThread.start();
-
+        RegisteryCLI registeryCLI = new RegisteryCLI(this);
+        Thread registryCLIThread = new Thread(registeryCLI);
+        registryCLIThread.start();
         
-        TCPServerThread serverListener = new TCPServerThread(serverSocket, registeredNodes, "Registry");
+        TCPServerThread serverListener = new TCPServerThread(serverSocket, registeredNodes, "Registry"); //make this pass an instance of itself as well lmao
         Thread tcpServerThread = new Thread(serverListener,"TCPServerThread");
         tcpServerThread.start();
 
-        inputHandlerThread.join();
         tcpServerThread.join();
-        
+        registryCLIThread.join();
     }
 
     private static void initiateServerSocket() { 
@@ -72,6 +76,21 @@ public class Registry {
                 System.out.println("incrementing");
                 ++initialPort;
             }
+        }
+    }
+
+    public void setupOverlayProtocol(int numConnections) {
+        System.out.println("received that this should happen with num = " + numConnections);
+        //right now in testing only two nodes will be connected, so each node needs one conenct
+        //send the connection information to each of these nodes so that they can connect
+        //if A beeds to connect with B only need to send one message to one person
+            //cause A will connect to B through B's serverThread will will spawn information about A
+                //and to connect with B A needs info about B so it works out
+    }
+
+    public void listRegisteredNodes() {
+        for(int i = 0; i < registeredNodes.size(); ++i) {
+            System.out.println(registeredNodes.get(i).ipAddress + " on port " + registeredNodes.get(i).portNumber);
         }
     }
 

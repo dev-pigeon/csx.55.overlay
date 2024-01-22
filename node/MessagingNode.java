@@ -36,38 +36,29 @@ public class MessagingNode {
 
     private static TCPSender sender;
 
-    private static ArrayList<RegisteredNode> registeredNodes;
+    public static ArrayList<RegisteredNode> registeredNodes;
 
     public static void main(String[] args) throws IOException, InterruptedException {
+        MessagingNode node = new MessagingNode();
+        node.start(args);  
+    }
 
-
+    private void start(String[] args) throws IOException, InterruptedException {
         initiateServerSocket(); //server socket is made
         //create a listener for this guy for future messaging nodes
         
-
         regInetAddress = InetAddress.getByName(args[0]);
         System.out.println(regInetAddress);
         registryPort = Integer.parseInt(args[1]);
         registrySocket = new Socket(regInetAddress, registryPort);
 
-        //since this the above is a blocking call
-        //if two messagingnodes try to use it at the exact same time
-        //only one will get picked up by the registry tcpserver thread,
-        //the loop continues in that thread,
-        //since we already made our server information, we can just write that data
-
-
         System.out.println("connected to server!");
         sender = new TCPSender(registrySocket);
+
         sendRegisterRequest();
 
-        TCPReceiverThread receiver = new TCPReceiverThread(registrySocket, registeredNodes, "MessagingNode");
-        Thread receiverThread = new Thread(receiver);
-        receiverThread.start();
-
-        //ask for a connection
-        
-        
+        RegisteredNode registryConnectionNode = new RegisteredNode(registrySocket,"MessagingNode"); //this node is what you receive form registry on!
+    
         TCPServerThread server = new TCPServerThread(serverSocket, registeredNodes, "MessagingNode");
         Thread serverThread = new Thread(server);
         serverThread.start();
@@ -76,19 +67,11 @@ public class MessagingNode {
         Thread inputHandlerThread = new Thread(inputHanlder,"Input handler Thread");
         inputHandlerThread.start();
 
-        
-
-        
-        
-
         //messagingnodes need serverthreads too (to listen to for connections between other messagingNodes)
 
         inputHandlerThread.join();
-        receiverThread.join();
         serverThread.join();
         
-        
-
     }
 
     private static void initiateServerSocket() { 
@@ -104,22 +87,10 @@ public class MessagingNode {
             }
         }
     }
-
-    public static void printHell() {
-        System.out.println("HELLLLLL");
-    }
-
+    
     private static void sendRegisterRequest() throws IOException {
-        System.out.println("writing ip = " + InetAddress.getLocalHost().getHostAddress());
-        System.out.println("writing port = " + serverPort);
         RegisterRequest registerRequest = new RegisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] registeryMessage = registerRequest.setBytes();
-        registerRequest.getBytes(registeryMessage);
-        registerRequest.handleEvent(registeredNodes, "notreg");
-        System.out.println("about to send message with length of " + registeryMessage.length);
-        System.out.println(registeryMessage);
         sender.sendData(registeryMessage);
-    }
-
-    
+    }  
 }

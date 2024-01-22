@@ -103,11 +103,11 @@ public class RegisterRequest implements Event {
     }
 
     @Override
-    public void handleEvent(ArrayList<RegisteredNode> registreredNodes, String owner) {
+    public void handleEvent(String owner) {
         if(owner.trim().equals("Registry")) {
             //
         } else {
-            MessagingNode.printHell();
+            System.out.println("this is the handling for the messagingnode type");
         }
     }    
 }

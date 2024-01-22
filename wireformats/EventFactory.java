@@ -10,6 +10,7 @@ public class EventFactory {
                 event = new RegisterRequest();
                 break;
             case Register_Response:
+                event = new RegisterResponse();
             default:
                 break;
         }

@@ -13,7 +13,6 @@ public class RegisteredNode {
    private static Socket socket;
    public String ipAddress;
    public int portNumber;
-   ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
    //need a field to denote if its owned by msg or registry
    private String owner;
    
@@ -26,11 +25,11 @@ public class RegisteredNode {
     */
 
 
-   public RegisteredNode(Socket socket, ArrayList<RegisteredNode> registeredNodes, String owner) throws IOException {
+   public RegisteredNode(Socket socket, String owner) throws IOException {
       this.socket = socket;
       this.ipAddress = socket.getInetAddress().getHostAddress();
       this.portNumber = socket.getPort();
-      this.registeredNodes = registeredNodes; //same list maintained by a given MSG node or the registry (depends on owner)
+    //same list maintained by a given MSG node or the registry (depends on owner)
       this.owner = owner;
       setUpandRun(); //these need to listen and be able to send, but also know the size of array
 
@@ -42,7 +41,7 @@ public class RegisteredNode {
 
       //about to start the receiver thread for the connected pre registered node
 
-      TCPReceiverThread receiver = new TCPReceiverThread(socket, registeredNodes, owner);
+      TCPReceiverThread receiver = new TCPReceiverThread(socket, owner);
       Thread receiverThread = new Thread(receiver);
       receiverThread.start();
       //need to figure out best way to register
