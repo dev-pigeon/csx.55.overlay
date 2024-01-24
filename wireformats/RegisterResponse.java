@@ -8,6 +8,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import node.MessagingNode;
+
 public class RegisterResponse implements Event {
 
     int messageType = 1;
@@ -65,6 +67,7 @@ public class RegisterResponse implements Event {
 
     @Override
     public void getBytes(byte[] marhalledData) throws IOException {
+
         ByteArrayInputStream bArrayInputStream = new ByteArrayInputStream(marhalledData);
         DataInputStream din = new DataInputStream(new BufferedInputStream(bArrayInputStream));
         //read the type
@@ -85,10 +88,9 @@ public class RegisterResponse implements Event {
 
     }
     @Override
-    public void handleEvent(String owner) {
-        if(owner.equals("MessagingNode")) {
+    public void handleEvent(Object owner) {
+        if(owner instanceof MessagingNode) {
             //print the message!
-            System.out.println("printing info");
             System.out.println(info);
         }
     }

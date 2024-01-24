@@ -7,10 +7,21 @@ public class EventFactory {
         Event event = null;
         switch (msgType) {
             case Register_Request:
+                
                 event = new RegisterRequest();
                 break;
             case Register_Response:
                 event = new RegisterResponse();
+                break;
+            case Messaging_Nodes_List:
+                event = new Messaging_Nodes_List();
+                break;
+            case Task_Initiate:
+                event = new Task_Initiate();
+                break;
+            case Message:
+                event = new Message();
+                break;
             default:
                 break;
         }

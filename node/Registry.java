@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import util.*;
 import transport.*;
+import wireformats.*;
 
 
 
@@ -57,7 +58,7 @@ public class Registry {
         Thread registryCLIThread = new Thread(registeryCLI);
         registryCLIThread.start();
         
-        TCPServerThread serverListener = new TCPServerThread(serverSocket, registeredNodes, "Registry"); //make this pass an instance of itself as well lmao
+        TCPServerThread serverListener = new TCPServerThread(serverSocket, registeredNodes, this); //make this pass an instance of itself as well lmao
         Thread tcpServerThread = new Thread(serverListener,"TCPServerThread");
         tcpServerThread.start();
 
@@ -80,20 +81,61 @@ public class Registry {
     }
 
     public void setupOverlayProtocol(int numConnections) {
+        System.out.println("there are " + registeredNodes.size() + " nodes ");
         System.out.println("received that this should happen with num = " + numConnections);
-        //right now in testing only two nodes will be connected, so each node needs one conenct
-        //send the connection information to each of these nodes so that they can connect
-        //if A beeds to connect with B only need to send one message to one person
-            //cause A will connect to B through B's serverThread will will spawn information about A
-                //and to connect with B A needs info about B so it works out
+        //connect the node in position 0 to position
+        try {
+            TCPSender sender = new TCPSender(registeredNodes.get(0).socket);
+            //I have a sender for message A, so I need to send B's info 
+            //populate the list
+            ArrayList<String> peerNodeList = new ArrayList<>();
+            String nodeInfo = registeredNodes.get(1).ipAddress + " " + Integer.toString(registeredNodes.get(1).portNumber);
+            
+            peerNodeList.add(nodeInfo);
+            Messaging_Nodes_List messaging_Nodes_List = new Messaging_Nodes_List(peerNodeList, peerNodeList.size());
+            byte[] marshalledData = messaging_Nodes_List.setBytes();
+            sender.sendData(marshalledData);
+
+            
+            
+        } catch(IOException ioe) {
+            System.out.println(ioe.getMessage());
+        }
     }
 
     public void listRegisteredNodes() {
         for(int i = 0; i < registeredNodes.size(); ++i) {
             System.out.println(registeredNodes.get(i).ipAddress + " on port " + registeredNodes.get(i).portNumber);
         }
+    } 
+    
+    public void createAndAddNode(Socket socket, RegisterRequest request) {
+        try {
+            System.out.println("Registry has been called to create a node with port number = " + request.portNumber);
+            RegisteredNode registeredNode = new RegisteredNode(socket, this, request.portNumber);
+            registeredNodes.add(registeredNode);
+            TCPSender registerConfirmation = new TCPSender(socket);
+            RegisterResponse registerResponse = new RegisterResponse((byte)1, "Registration successful, there are (" + registeredNodes.size() + ") nodes in the overlay");
+            byte[] marhalledData = registerResponse.setBytes();
+            registerConfirmation.sendData(marhalledData);
+        } catch(IOException ioe) {
+            System.out.println(ioe.getMessage());
+        } 
     }
 
-   
-    
+    public void initiateMessagingNodes(int rounds)  {
+        //loop our little list and send message to em all
+        Task_Initiate task = new Task_Initiate(rounds);
+        
+        try {
+            byte[] taskMessage = task.setBytes();
+            for(RegisteredNode node : registeredNodes) {
+                TCPSender sender = new TCPSender(node.socket);
+                sender.sendData(taskMessage);
+            }
+        } catch(IOException ioe) {
+            System.out.println(ioe.getMessage());
+        }
+        
+    }
 }

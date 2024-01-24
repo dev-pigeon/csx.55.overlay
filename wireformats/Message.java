@@ -1,0 +1,78 @@
+package wireformats;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+import node.MessagingNode;
+
+public class Message implements Event{
+
+    int type = 9;
+    int payload = 0;
+
+    public Message() {
+        this(0);
+    }
+
+    public Message(int payload) {
+        this.payload = payload;
+    }
+
+    @Override
+    public int getType(byte[] marshalledMessage) throws IOException {
+        ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledMessage);
+
+        DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
+
+        type = din.readInt();
+        return type;
+    }
+
+    @Override
+    public byte[] setBytes() throws IOException {
+        byte[] marshalledData = null;
+        ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
+        DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
+
+        dout.writeInt(type);
+        dout.writeInt(payload);
+
+        dout.flush();
+
+        marshalledData = baOutputStream.toByteArray();
+
+        baOutputStream.close();
+        dout.close();
+        return marshalledData;
+    }
+
+    @Override
+    public void getBytes(byte[] marhalledData) throws IOException {
+        ByteArrayInputStream bArrayInputStream = new ByteArrayInputStream(marhalledData);
+        DataInputStream din = new DataInputStream(new BufferedInputStream(bArrayInputStream));
+
+        type = din.readInt();
+        payload = din.readInt();
+
+        bArrayInputStream.close();
+        din.close();
+    }
+
+    @Override
+    public void handleEvent(Object owner) {
+        if(owner instanceof MessagingNode) {
+             ((MessagingNode)owner).messagesReceived += 1;
+             ((MessagingNode)owner).messagesReceivedSum += payload;
+            
+           
+        } else {
+            System.out.println("this is really not supposed to fucking happen");
+        }
+    }
+    
+}

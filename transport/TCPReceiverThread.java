@@ -22,11 +22,11 @@ public class TCPReceiverThread implements Runnable {
     private Socket socket;
     private DataInputStream din;
     private ArrayList<RegisteredNode> registeredNodes;
-    private String owner;//this is my like denothing thing for now
+    private Object owner;
     //it will eventually change to the object for dikjstra
     private String originIP;
 
-    public TCPReceiverThread(Socket socket, String owner) throws IOException {
+    public TCPReceiverThread(Socket socket, Object owner) throws IOException {
         this.socket = socket;
         din = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
         originIP = socket.getInetAddress().getHostAddress();
@@ -37,7 +37,6 @@ public class TCPReceiverThread implements Runnable {
     @Override
     public void run() {
         int dataLength;
-        System.out.println("TCP receiver thread has been started");
         while(socket!= null) {
             try {
                 //read the length so we know how big the array is
@@ -47,20 +46,18 @@ public class TCPReceiverThread implements Runnable {
                 
                 byte[] marshallCopy = Arrays.copyOf(marshalledData, marshalledData.length);
                 int type = readType(marshallCopy);
-
+               
                 
                 
                 messageType msgType = Protocol.getMessageType(type);
 
                 
+                Event event = EventFactory.spawnEvent(msgType); 
 
-                Event event = EventFactory.spawnEvent(msgType); //may need to pass the socket into the event so you can like, send stuff back
+               
                 
                 //get the bytes and stuff, the event will handle the rest
-                System.out.println("THE MARSHALLED DATA = " + marshalledData);
-                if(event == null) {
-                    System.out.println("WHAT");
-                }
+                
                 event.getBytes(marshalledData); 
                 //call handle event based on the type that it is
                 event.handleEvent(owner); //diff events will call methods based on input of owner (change owner to a literal instance of registry or msg node)

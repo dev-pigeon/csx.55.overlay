@@ -20,6 +20,4 @@ tcp server protocol
     
 
 
-javac node/*.java
-javac transport/*.java
-javac util/*.java
+javac node/*.java && javac transport/*.java && javac wireformats/*.java && javac util/*.java

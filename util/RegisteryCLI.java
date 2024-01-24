@@ -1,5 +1,6 @@
 package util;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -37,6 +38,8 @@ public class RegisteryCLI implements Runnable {
             handleOverlaySetup(commmandEntered);
         } else if(commmandEntered.equals("list-messaging-nodes")) {
             registry.listRegisteredNodes();
+        } else if(commmandEntered.contains("start")) {
+            handleStartProtocol(commmandEntered);
         }
     }
 
@@ -44,9 +47,12 @@ public class RegisteryCLI implements Runnable {
     private void handleOverlaySetup(String overlayCommand) {
         //this will extract the number of connections and then return that to a method in Registry
         int numberOfConnections = Integer.parseInt(overlayCommand.substring(14, overlayCommand.length()));
-        System.out.println(numberOfConnections);
-        
         registry.setupOverlayProtocol(numberOfConnections);
+    }
+
+    private void handleStartProtocol(String startCommand)  {
+        int rounds = Integer.parseInt(startCommand.substring(6,startCommand.length()));
+        registry.initiateMessagingNodes(rounds);
     }
     
 }

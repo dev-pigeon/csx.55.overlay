@@ -20,42 +20,31 @@ public class TCPServerThread implements Runnable {
     ServerSocket serverSocket;
     ArrayList<RegisteredNode> registeredNodes;
     //need a field for owner tpe
-    private String owner;
+    private Object owner;
 
     TCPSender sender;
 
     boolean accepted = false;
 
-    public TCPServerThread(ServerSocket serverSocket, ArrayList<RegisteredNode> registeredNodes, String owner) {
+    public TCPServerThread(ServerSocket serverSocket, ArrayList<RegisteredNode> registeredNodes, Object owner) {
         this.serverSocket = serverSocket;
         this.registeredNodes = registeredNodes;
         this.owner = owner;
+
     }
 
     @Override
     public void run() {
         while(true) {
            Socket socket = acceptConnections();
+
+
+           //create receiver thread with owner based on who owns the server thread
+
            try {
 
              readRegistrationEvent(socket);
 
-             if(accepted) {
-
-                System.out.println("a messaging node was sucessfully registered");
-                
-                RegisteredNode node = new RegisteredNode(socket, owner);
-                addToList(node);
-                //call generate response message
-                sender = new TCPSender(socket);
-                String responseInfo = "Registration request successful. Then number of nodes currently in the overlay is (" + registeredNodes.size() + ")";
-                generateReponse(responseInfo, accepted);
-                accepted = false;
-             } else {
-                sender = new TCPSender(socket);
-                String response = "ERROR: Invalid registration credentials";
-                generateReponse(response, false);
-             }
             } catch (IOException e) {
             // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -74,23 +63,7 @@ public class TCPServerThread implements Runnable {
         return socket;
     }
 
-    private void addToList(RegisteredNode registeredNode) {
-        synchronized(registeredNodes) {
-            registeredNodes.add(registeredNode);
-        }
-    }
-
-    private RegisteredNode createRegisteredNode(Socket socket) {
-        RegisteredNode registeredNode = null;
-        try {
-            registeredNode = new RegisteredNode(socket, owner);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return registeredNode;
-    }
-
+    
     private void readRegistrationEvent(Socket socket) throws IOException {
         //the "origin IP" for that check can be gotten from this socket
         //i think?
@@ -100,29 +73,46 @@ public class TCPServerThread implements Runnable {
         int length = din.readInt();
         byte[] marshalledData = new byte[length];
         din.readFully(marshalledData,0,length);
-        System.out.println("Server thread: bytes have been read fully with length = " + length);
         System.out.println(marshalledData);
         //we dint need the type 
         RegisterRequest request = new RegisterRequest();
         //then get the bytes
         request.getBytes(marshalledData);
+
+
+
+        
+
         //examine the data
-        if(owner.equals("Registry")) {
+        if(owner instanceof Registry) {
             //check if it is a mismatch
             if(!request.ipAddress.equals(socketIP)) {
-                //call generate response message
-                return;
+                sender = new TCPSender(socket);
+                String response = "ERROR: Invalid registration credentials";
+                generateReponse(response, false);
                  
             } else {
                 for(int i = 0; i < registeredNodes.size(); ++i) {
-                    if((registeredNodes.get(i).ipAddress.equals(request.ipAddress)) && registeredNodes.get(i).portNumber == socket.getPort()) {
-                        return;
+                    if((registeredNodes.get(i).ipAddress.equals(request.ipAddress)) && registeredNodes.get(i).portNumber == request.portNumber) {
+                        sender = new TCPSender(socket);
+                        String response = "ERROR: Invalid registration credentials";
+                        generateReponse(response, false);
                     }
                 }
-            }           
-        } else { //case of messaging node receiving connection from other messaging nodes
+            }
             
+            //in the instance of getting a messaging node registered with the server we have passed checks, call create and add
+            ((Registry)owner).createAndAddNode(socket, request);
+
+        } else if (owner instanceof MessagingNode){ //case of messaging node receiving connection from other messaging nodes
+            //make sure they get added to the correct list?\\
+            System.out.println("messenging guy detected");
+            String message = "you have connected with another messaging node";
+            sender = new TCPSender(socket);
+            generateReponse(message, true);
+            ((MessagingNode) owner).createAndAddNode(socket, request);
         }
+        //call create and add 
         accepted = true;  
     }
 

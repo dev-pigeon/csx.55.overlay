@@ -18,7 +18,7 @@ import node.*;
 public class RegisterRequest implements Event { 
     int type = 0;
     public String ipAddress;
-    int portNumber;
+    public int portNumber;
     
     public RegisterRequest() {
         this(null, 0);
@@ -37,12 +37,12 @@ public class RegisterRequest implements Event {
 
         type = din.readInt();
 
-        System.out.println("type = " + type);
+       
 
         int IPLength = din.readInt();
         
 
-        System.out.println("IP Length in get bytes = " + IPLength);
+        
         
 
         byte[] IPbytes = new byte[IPLength];
@@ -55,7 +55,6 @@ public class RegisterRequest implements Event {
         baInputStream.close();
         din.close();
 
-        System.out.println("request info, port: " + portNumber + " ip: " + ipAddress);
 
     }
 
@@ -103,9 +102,9 @@ public class RegisterRequest implements Event {
     }
 
     @Override
-    public void handleEvent(String owner) {
-        if(owner.trim().equals("Registry")) {
-            //
+    public void handleEvent(Object owner) {
+        if(owner instanceof Registry) {
+            
         } else {
             System.out.println("this is the handling for the messagingnode type");
         }
