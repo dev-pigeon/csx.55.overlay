@@ -89,10 +89,8 @@ public class RegisterResponse implements Event {
     }
     @Override
     public void handleEvent(Object owner) {
-        if(owner instanceof MessagingNode) {
-            //print the message!
-            System.out.println(info);
-        }
+        //print the contents of the response to the screen
+        System.out.println(info);
     }
 
 

@@ -16,13 +16,16 @@ public class Messaging_Nodes_List implements Event {
     int type = 3;
     int numOfPeerNodes;
     //I will generate the node info list as a ArrayList<String> but just write the strings individually
-    static ArrayList<String> peerNodeList = new ArrayList<>();
+    ArrayList<String> connectionIPList = new ArrayList<>();
+    ArrayList<Integer> connectionPortList = new ArrayList<>();
+
     public Messaging_Nodes_List() {
-        this(new ArrayList<String>(), 0);
+        this(new ArrayList<String>(), new ArrayList<Integer>(), 0);
     }
 
-    public Messaging_Nodes_List(ArrayList<String> peerNodeList, int numberOfConnections) {
-        this.peerNodeList = peerNodeList;
+    public Messaging_Nodes_List(ArrayList<String> connectionIPList, ArrayList<Integer> connectionPortList, int numberOfConnections) {
+        this.connectionIPList = connectionIPList;
+        this.connectionPortList = connectionPortList;
         this.numOfPeerNodes = numberOfConnections;
     }
 
@@ -44,6 +47,13 @@ public class Messaging_Nodes_List implements Event {
         //buffered ooutput that byearray output uses
         DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
 
+        /* since this is going to be unpacked as two lists
+         * one for IP's and one for corresponding port numbers
+         * after we write num connections...
+         * we will write in order of, (IP LENGTH, IP, PORT) 
+         * that pattern will repeat for num connections
+         */
+        
         //write the type
         dout.writeInt(type);
         //write the number of peer nodes
@@ -51,10 +61,13 @@ public class Messaging_Nodes_List implements Event {
         
         //write the stuffs
         for(int i = 0; i < numOfPeerNodes; ++i) {
-            byte[] nodeInfoBytes = peerNodeList.get(i).getBytes();
-            int infoLength = nodeInfoBytes.length;
-            dout.writeInt(infoLength);
-            dout.write(nodeInfoBytes);
+            byte[] ipBytes = connectionIPList.get(i).getBytes();
+            int ipLength = ipBytes.length;
+            dout.writeInt(ipLength);
+            dout.write(ipBytes);
+            int port = connectionPortList.get(i);
+            System.out.println("writing port");
+            dout.writeInt(port);
         }
 
         //flush stream
@@ -80,14 +93,21 @@ public class Messaging_Nodes_List implements Event {
         System.out.println("number of peer nodes = " + numOfPeerNodes);
         //read each of the node information and put into an array!
         for(int i = 0; i < numOfPeerNodes; ++i) {
-            int infoLength = din.readInt();
-            byte[] infoBytes = new byte[infoLength];
-            din.readFully(infoBytes);
-            //for some reason there is a null pointer type deal here
-            String nodeInfo = new String(infoBytes).trim();
-            System.out.println("peer node info = " + nodeInfo);
-            //if list is null then instantiate it first in this method?
-            peerNodeList.add(nodeInfo);
+            
+            int ipLength = din.readInt();
+            System.out.println("IP length = " + ipLength);
+            byte[] ipBytes = new byte[ipLength];
+            
+            din.readFully(ipBytes);
+            String connectionIP = new String(ipBytes);
+            System.out.println("IP = " + connectionIP);
+            
+            System.out.println("reading port");
+            int port = din.readInt();
+           
+            connectionIPList.add(connectionIP);
+            connectionPortList.add(port);
+            System.out.println("finished");
         }
 
         bArrayInputStream.close();
@@ -95,14 +115,14 @@ public class Messaging_Nodes_List implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner) {
-        if(owner instanceof MessagingNode) {
-            try {
-                ((MessagingNode)owner).addConnectionProtocol(peerNodeList);
-            } catch(IOException ioe) {
-                System.out.println(ioe.getMessage());
-            }
+    public void handleEvent(Object owner)  {
+        try {
+            MessagingNode.addConnectionProtocol(connectionIPList, connectionPortList);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
+           
     }
 
     

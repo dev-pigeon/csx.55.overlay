@@ -44,11 +44,17 @@ public class MessagingNode {
 
     private static TCPSender sender;
 
-    public static ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
+   public ArrayList<PeerNode> peerNodes = new ArrayList<>();
+
+    RegisteredNode registryConnectionNode;
+
+     static MessagingNode self;
+
+
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        MessagingNode node = new MessagingNode();
-        node.start(args);  
+         self = new MessagingNode();
+        self.start(args);  
     }
 
     private void start(String[] args) throws IOException, InterruptedException {
@@ -63,13 +69,13 @@ public class MessagingNode {
         System.out.println("connected to server!");
         sender = new TCPSender(registrySocket);
 
-        RegisteredNode registryConnectionNode = new RegisteredNode(registrySocket,this, registryPort); //this node is what you receive form registry on!
+        registryConnectionNode = new RegisteredNode(registrySocket); //this node is what you receive form registry on!
 
         sendRegisterRequest();
 
         
-        System.out.println("Messaging node creting server thread listing on IP " + serverSocket.getInetAddress().getLocalHost().getHostAddress() + " and port " + serverSocket.getLocalPort());
-        TCPServerThread server = new TCPServerThread(serverSocket, registeredNodes, this);
+        //System.out.println("Messaging node creting server thread listing on IP " + serverSocket.getInetAddress().getLocalHost().getHostAddress() + " and port " + serverSocket.getLocalPort());
+        TCPServerThread server = new TCPServerThread(serverSocket, this);
         Thread serverThread = new Thread(server);
         serverThread.start();
 
@@ -79,7 +85,7 @@ public class MessagingNode {
 
         //messagingnodes need serverthreads too (to listen to for connections between other messagingNodes)
 
-        inputHandlerThread.join();
+       inputHandlerThread.join();
         serverThread.join();
         
     }
@@ -106,18 +112,27 @@ public class MessagingNode {
         sender.sendData(registeryMessage);
     }  
 
-    public void addConnectionProtocol(ArrayList<String> peerNodeList) throws IOException {
-        for(int i = 0; i < peerNodeList.size(); ++i) {
+    //this will now accept two ArrayLists, one for IP and one for port, they correspond
+    public static void addConnectionProtocol(ArrayList<String> connectionIPList, ArrayList<Integer> connectionPortList) throws IOException{
+        for(int i = 0; i < connectionIPList.size(); ++i) {
             //need to parse the IP and the INT
-            String connectIP = peerNodeList.get(i).substring(0,13).trim();
+            String connectIP = connectionIPList.get(i).trim();
             System.out.println("Node IP = " + connectIP);
             
-            int connectPort = Integer.parseInt(peerNodeList.get(i).substring(13, peerNodeList.get(i).length())); 
+            int connectPort = connectionPortList.get(i); 
+            System.out.println("node port  = " + connectPort);
             //connect the mf socket 
             Socket connectedNode = new Socket(connectIP, connectPort);
             //create a registered node and add it to the list
-            RegisteredNode newConnection = new RegisteredNode(connectedNode, this, connectPort);
-            registeredNodes.add(newConnection);
+            PeerNode newConnection;
+            try {
+                newConnection = new PeerNode(connectedNode, self, connectPort);
+                self.peerNodes.add(newConnection);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
             //send a registration message to whoever you connected to so they can add YOU to the list
             //RegisterRequest notification = new RegisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
             //TCPSender sender = new TCPSender(connectedNode);
@@ -126,15 +141,15 @@ public class MessagingNode {
             
         }
 
-        System.out.println("All connections are established. Number of connections " + registeredNodes.size());
+        System.out.println("All connections are established. Number of connections " + self.peerNodes.size());
     }
 
-    public void initiateTask(int rounds) {
+    public static void initiateTask(int rounds) {
         //im going to assume that every round is five messages
         Random rand = new Random();
-        if(registeredNodes.size() > 0) {
-            System.out.println(registeredNodes.get(0).ipAddress);
-            System.out.println(registeredNodes.get(0).portNumber);
+        if(self.peerNodes.size() > 0) {
+            System.out.println(self.peerNodes.get(0).socket.getInetAddress().getHostAddress());
+            System.out.println(self.peerNodes.get(0).socket.getPort());
         }
         for(int i = 0; i < rounds; ++i) {
             for(int j = 0; j < 5; ++j) {
@@ -142,10 +157,10 @@ public class MessagingNode {
                 Message msg = new Message(payload);
                 try {
                     byte[] message = msg.setBytes();
-                    TCPSender sender = new TCPSender(registeredNodes.get(0).socket);
+                    TCPSender sender = new TCPSender(self.peerNodes.get(0).socket);
                     sender.sendData(message);
-                    messagesSent+=1;
-                    messagesSentSum += payload;
+                    self.messagesSent+=1;
+                    self.messagesSentSum += payload;
                 } catch(IOException ioe) {
 
                 }
@@ -154,10 +169,10 @@ public class MessagingNode {
         }
 
         System.out.println("TASK DONE");
-        System.out.println("num sent = " + messagesSent);
-        System.out.println("num received = " + messagesReceived);
-        System.out.println("sum of sent = " + messagesSentSum);
-        System.out.println("sum of received = " + messagesReceivedSum);
+        System.out.println("num sent = " + self.messagesSent);
+        System.out.println("num received = " + self.messagesReceived);
+        System.out.println("sum of sent = " + self.messagesSentSum);
+        System.out.println("sum of received = " + self.messagesReceivedSum);
     }
 
     public void processMessage(int payload) {
@@ -173,17 +188,25 @@ public class MessagingNode {
 
     }
 
+
+    /* 
     public void createAndAddNode(Socket socket, RegisterRequest request) {
         try {
             System.out.println("Registry has been called to create a node with port number = " + request.portNumber);
-            RegisteredNode registeredNode = new RegisteredNode(socket, this, request.portNumber);
-            registeredNodes.add(registeredNode);
+            PeerNode registeredNode = new PeerNode(socket, this);
+            peerNodes.add(registeredNode);
             TCPSender registerConfirmation = new TCPSender(socket);
-            RegisterResponse registerResponse = new RegisterResponse((byte)1, "Registration successful, there are (" + registeredNodes.size() + ") nodes in the overlay");
+            RegisterResponse registerResponse = new RegisterResponse((byte)1, "Registration successful, there are (" + peerNodes.size() + ") nodes in the overlay");
             byte[] marhalledData = registerResponse.setBytes();
             registerConfirmation.sendData(marhalledData);
         } catch(IOException ioe) {
             System.out.println(ioe.getMessage());
         } 
+    }
+    */
+
+
+    public static void addPeerNode() {
+
     }
 }

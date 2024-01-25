@@ -1,63 +1,40 @@
 package node;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 
 import transport.TCPReceiverThread;
-import transport.TCPSender;
-import transport.TCPServerThread;
 
 public class RegisteredNode {
     
    public Socket socket;
    public String ipAddress;
-   public int portNumber;
-   //need a field to denote if its owned by msg or registry
-   private Object owner;
-
+   int portNum;
    
-   
-
-   /* Note
-    * Registered nodes can be two things
-    1.) they can be literal registered nodes in the registry
-    2.) or they can be the objects containing the sockets for the other nodes
-         that a given messaging node is connected to, 
+   /* updated note
+      registered nodes are nothing more than the Object representation of a messaging node that is connected to 
+      the registry, but they need their own receivers so that the sister node (in msgNode) can send their request
+      and so these guys can send their response
     */
 
-    
-
-   public RegisteredNode(Socket socket, Object owner, int port) throws IOException {
+    //you may find yourself wondering how we deal with the R response in the msg node since we dont have an owner
+    //the asnwer is we don't we just need to print, and since that obj is on the msg node machine, it will print
+   public RegisteredNode(Socket socket) throws IOException {
       this.socket = socket;
       this.ipAddress = socket.getInetAddress().getHostAddress();
-      this.portNumber = port;
-      System.out.println("CREATED REGISTERED NODE WITH PORT = " + portNumber);
-    //same list maintained by a given MSG node or the registry (depends on owner)
-      this.owner = owner;
-      setUpandRun(); //these need to listen and be able to send, but also know the size of array
-
+      setUpandRun(); 
    }
 
    public void setUpandRun() throws IOException {
       //create the receiver thread
-
-
-      //about to start the receiver thread for the connected pre registered node
-
-      //need to create a server socket to use the TCPServerthread for connections with other people!
-      /* 
-      iniServerSocket();
-      TCPServerThread server = new TCPServerThread(serverSocket, test, owner);
-      Thread sThread = new Thread(server);
-      sThread.start();
-      */
-
-      TCPReceiverThread receiver = new TCPReceiverThread(socket, owner);
+      TCPReceiverThread receiver = new TCPReceiverThread(socket, this);
       Thread receiverThread = new Thread(receiver);
       receiverThread.start();
    }
 
+   //this is needed because when the Registry's R node gets the request we have to have their ServerSockets port num set 
+   //for when registry sends the Messaging list or whatever
+   public void setPortNum(int portNum) {
+      this.portNum = portNum;
+   }
 }

@@ -26,7 +26,7 @@ public class TCPServerThread implements Runnable {
 
     boolean accepted = false;
 
-    public TCPServerThread(ServerSocket serverSocket, ArrayList<RegisteredNode> registeredNodes, Object owner) {
+    public TCPServerThread(ServerSocket serverSocket, Object owner) {
         this.serverSocket = serverSocket;
         this.registeredNodes = registeredNodes;
         this.owner = owner;
@@ -38,19 +38,42 @@ public class TCPServerThread implements Runnable {
         while(true) {
            Socket socket = acceptConnections();
 
-
-           //create receiver thread with owner based on who owns the server thread
-
-           try {
-
-             readRegistrationEvent(socket);
-
-            } catch (IOException e) {
-            // TODO Auto-generated catch block
+           if(owner instanceof Registry) {
+            //create a registered node
+            try {
+                System.out.println("creating registered node");
+                RegisteredNode potentialNode = new RegisteredNode(socket);
+            } catch (IOException ioe) {
+                
+                System.out.println("Problem in creating a registered node");
+                System.out.println(ioe.getMessage());
+            }
+            
+           } else if(owner instanceof MessagingNode) {
+             System.out.println("creating peer node");
+             try {
+                //WE ARE SETTING PORT = TO ZERO HERE BECAUSE WE DONT REALLY NEED TO KNOW THE PORT SINCE WE HAVE BEEN THE
+                //THAT WAS CONNECTED TO
+                PeerNode peerNode = new PeerNode(socket, (MessagingNode)owner, 0);
+                ((MessagingNode)owner).peerNodes.add(peerNode);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+           }
+
+           
+            //all commented code below this point was dumb and a bad implementation
+            //we are going to make this much simpler,
+            //no more need for registered node list
+            //this class will have ONE responsibility, to accept connects, and make the proper node type, thats it.
+            //the proper node types will handle themselves
+
+            
         }
     }
+
+     
 
     private Socket acceptConnections() {
         Socket socket = null;
@@ -62,6 +85,8 @@ public class TCPServerThread implements Runnable {
         }
         return socket;
     }
+
+    /*
 
     
     private void readRegistrationEvent(Socket socket) throws IOException {
@@ -129,4 +154,6 @@ public class TCPServerThread implements Runnable {
         sender.sendData(marshalledMessage);
 
     }
+
+    */
 }

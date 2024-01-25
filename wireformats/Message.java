@@ -71,7 +71,8 @@ public class Message implements Event{
             
            
         } else {
-            System.out.println("this is really not supposed to fucking happen");
+             ((MessagingNode)owner).messagesReceived += 1;
+             ((MessagingNode)owner).messagesReceivedSum += payload;
         }
     }
     
