@@ -22,11 +22,11 @@ public class InputHandler implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("i am input handler thread and I was started");
+       // System.out.println("i am input handler thread and I was started");
 
        while(true) {
         String command = scan.nextLine();
-        System.out.println("You have " + ++count + " commands entered");
+        //System.out.println("You have " + ++count + " commands entered");
        }
     }
     

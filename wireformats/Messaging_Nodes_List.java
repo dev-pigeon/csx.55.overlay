@@ -66,7 +66,7 @@ public class Messaging_Nodes_List implements Event {
             dout.writeInt(ipLength);
             dout.write(ipBytes);
             int port = connectionPortList.get(i);
-            System.out.println("writing port");
+           // System.out.println("writing port");
             dout.writeInt(port);
         }
 
@@ -90,24 +90,24 @@ public class Messaging_Nodes_List implements Event {
         type = din.readInt();
         //read the number of nodes
         numOfPeerNodes = din.readInt();
-        System.out.println("number of peer nodes = " + numOfPeerNodes);
+       // System.out.println("number of peer nodes = " + numOfPeerNodes);
         //read each of the node information and put into an array!
         for(int i = 0; i < numOfPeerNodes; ++i) {
             
             int ipLength = din.readInt();
-            System.out.println("IP length = " + ipLength);
+           // System.out.println("IP length = " + ipLength);
             byte[] ipBytes = new byte[ipLength];
             
             din.readFully(ipBytes);
             String connectionIP = new String(ipBytes);
-            System.out.println("IP = " + connectionIP);
+            //System.out.println("IP = " + connectionIP);
             
-            System.out.println("reading port");
+            //System.out.println("reading port");
             int port = din.readInt();
            
             connectionIPList.add(connectionIP);
             connectionPortList.add(port);
-            System.out.println("finished");
+           // System.out.println("finished");
         }
 
         bArrayInputStream.close();

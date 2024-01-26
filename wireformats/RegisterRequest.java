@@ -31,9 +31,10 @@ public class RegisterRequest implements Event {
 
     public void getBytes(byte[] marshalledMessage) throws IOException {
         //this is the demarshalling!!!
-        System.out.println(" i am demarshalling the register request");
+        //System.out.println(" i am demarshalling the register request");
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledMessage);
-
+        
+        
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
         type = din.readInt();
@@ -75,7 +76,7 @@ public class RegisterRequest implements Event {
         //then write the IP
         byte[] ipBytes = ipAddress.getBytes();
         int elemLength = ipBytes.length;
-        System.out.println("writing ip length as = " + elemLength);
+        //System.out.println("writing ip length as = " + elemLength);
         dout.writeInt(elemLength);
         dout.write(ipBytes);
        
@@ -97,7 +98,7 @@ public class RegisterRequest implements Event {
     public void handleEvent(Object owner) {
         //the owner of this is going to be the registered node since Req request will only be sent to these guys
         //therefor its safe to just cast that john
-        System.out.println("I am calling validate node with IP = " + ipAddress + " and portnumber = " + portNumber);
+        //System.out.println("I am calling validate node with IP = " + ipAddress + " and portnumber = " + portNumber);
         Registry.ValidateNode((RegisteredNode)owner, ipAddress, portNumber);
 
     }    

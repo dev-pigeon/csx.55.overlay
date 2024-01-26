@@ -41,7 +41,7 @@ public class TCPServerThread implements Runnable {
            if(owner instanceof Registry) {
             //create a registered node
             try {
-                System.out.println("creating registered node");
+               // System.out.println("creating registered node");
                 RegisteredNode potentialNode = new RegisteredNode(socket);
             } catch (IOException ioe) {
                 
@@ -50,7 +50,7 @@ public class TCPServerThread implements Runnable {
             }
             
            } else if(owner instanceof MessagingNode) {
-             System.out.println("creating peer node");
+             //System.out.println("creating peer node");
              try {
                 //WE ARE SETTING PORT = TO ZERO HERE BECAUSE WE DONT REALLY NEED TO KNOW THE PORT SINCE WE HAVE BEEN THE
                 //THAT WAS CONNECTED TO

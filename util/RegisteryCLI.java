@@ -11,8 +11,7 @@ public class RegisteryCLI implements Runnable {
 
     //input handler will need a reference to the registries
     //list of registered nodes for responding to commands, input handler will also need a sender object
-
-    int count = 0;
+    
     Scanner scan = new Scanner(System.in);
     
     Registry registry;
@@ -24,7 +23,7 @@ public class RegisteryCLI implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("i am the registry cli and the current size of registered nodes is " + registry.registeredNodes.size());
+       // System.out.println("i am the registry cli and the current size of registered nodes is " + registry.registeredNodes.size());
 
        while(true) {
         String command = scan.nextLine();

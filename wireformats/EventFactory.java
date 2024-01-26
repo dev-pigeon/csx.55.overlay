@@ -22,6 +22,18 @@ public class EventFactory {
             case Message:
                 event = new Message();
                 break;
+            case Deregister_Request:
+                event = new DeregisterRequest();
+                break;
+            case Pull_Traffic_Summary:
+                event = new PullTrafficSummary();
+                break;
+            case Traffic_Summary:
+                event = new TrafficSummary();
+                break;
+            case Task_Complete:
+                event = new TaskComplete();
+                break;
             default:
                 break;
         }

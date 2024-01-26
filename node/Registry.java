@@ -37,6 +37,9 @@ public class Registry {
     private static int port;
     private static InetAddress serverAddress;
     private static ServerSocket serverSocket;
+    private static int numTaskComplete = 0;
+    private static int numSummaryReceived = 0;
+    private static ArrayList<String> summaryList = new ArrayList<>();;
   
     public static ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -90,8 +93,8 @@ public class Registry {
     }
 
     public void setupOverlayProtocol(int numConnections) {
-        System.out.println("there are " + registeredNodes.size() + " nodes ");
-        System.out.println("received that this should happen with num = " + numConnections);
+      //  System.out.println("there are " + registeredNodes.size() + " nodes ");
+       // System.out.println("received that this should happen with num = " + numConnections);
         //connect the node in position 0 to position
         try {
 
@@ -142,7 +145,7 @@ public class Registry {
     public static void ValidateNode(RegisteredNode potentialNode, String requestIP, int requestPort) {
 
         //check if the IP in the object/socket is diff from the request, if so kill his ass
-        System.out.println("i was successfully called");
+        //System.out.println("i was successfully called");
         if(!potentialNode.socket.getInetAddress().getHostAddress().equals(requestIP)) {
             String error = "ERROR: Mismatch in IP of socket and IP sent in the request message.";
             GenerateRegistrationResponse(potentialNode, (byte) 0, error);
@@ -156,8 +159,6 @@ public class Registry {
                 return;
             }
         }
-
-        //we are down here so we call RegisterNode
         RegisterNode(potentialNode, requestPort);
 
     }
@@ -179,7 +180,67 @@ public class Registry {
         potentialNode.setPortNum(registerPort);
         //add him and generate the response
         registeredNodes.add(potentialNode);
+        System.out.println("number of nodes in registy  = "  + registeredNodes.size());
         String message = "Registration request successful. The number of messaging nodes currently constituting the overlay is (" + Integer.toString(registeredNodes.size()) + ")";
         GenerateRegistrationResponse(potentialNode, (byte)1, message);
+   }
+
+   public static synchronized void checkDeregisterRequest(String ip, int port, RegisteredNode node) {
+        if(!registeredNodes.contains(node)) {
+            String message = "ERROR: Deregistration Request failed. Node was not in registry.";
+            GenerateRegistrationResponse(node, (byte)0, message);
+        } else if(!ip.equals(node.socket.getInetAddress().getHostAddress())) {
+            System.out.println("REQUEST IP = " + ip + " and node socket IP = " + node.socket.getInetAddress().getHostAddress());
+            String message = "Error: Deregistration Request failed. IP of request and sock differ";
+            GenerateRegistrationResponse(node, (byte)0, message);
+        }
+
+        //only send messages for failure, just unadd the node now
+        registeredNodes.remove(node);
+    
+   }
+
+   public static void checkTaskComplete() {
+    ++numTaskComplete;
+    System.out.println("number of task completes is " + numTaskComplete);
+    if(numTaskComplete == registeredNodes.size()) {
+        try {
+            Thread.sleep(15000);
+            pullTrafficSummary();
+        } catch(InterruptedException  | IOException E ) {
+            System.out.println(E.getMessage());
+        }
+    }
+
+   }
+   private static void pullTrafficSummary() throws IOException {
+    PullTrafficSummary summaryRequest = new PullTrafficSummary();
+    System.out.println("sending pull traffic summary");
+    byte[] summaryRequestBytes = summaryRequest.setBytes();
+    for(RegisteredNode node : registeredNodes) {
+        TCPSender sender = new TCPSender(node.socket);
+        sender.sendData(summaryRequestBytes);
+    }
+
+   }
+
+   public static synchronized void storeTrafficSummary(String summary) {
+    
+
+    System.out.println("receiving summary");
+    String nodeSummary = "Node " + Integer.toString(numSummaryReceived) + " " + summary;
+    summaryList.add(nodeSummary);
+    ++numSummaryReceived;
+    System.out.println("number of summaries = " + numSummaryReceived);
+    if(numSummaryReceived == registeredNodes.size()) {
+        printTrafficSummary();
+    }
+
+   }
+
+   private static synchronized void printTrafficSummary() {
+    for(String summary : summaryList) {
+        System.out.println(summary);
+    }
    }
 }

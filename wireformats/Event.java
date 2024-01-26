@@ -10,4 +10,6 @@ public interface Event {
     public void getBytes(byte[] marhalledData) throws IOException; //this demarshalls the message and populates the wireformat fields
     public void handleEvent(Object owner); //determines event type (registry or msging node) handles accordingly
 
+    //Object owner, Object nodeType -> probably will do that
+
 }

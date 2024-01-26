@@ -10,6 +10,7 @@ import java.util.Random;
 import transport.TCPSender;
 import transport.TCPServerThread;
 import util.InputHandler;
+import util.MsgNodeCLI;
 import wireformats.*;
 
 /* TODO - now DONE
@@ -66,7 +67,7 @@ public class MessagingNode {
         registryPort = Integer.parseInt(args[1]);
         registrySocket = new Socket(regInetAddress, registryPort);
 
-        System.out.println("connected to server!");
+        //System.out.println("connected to server!");
         sender = new TCPSender(registrySocket);
 
         registryConnectionNode = new RegisteredNode(registrySocket); //this node is what you receive form registry on!
@@ -79,15 +80,11 @@ public class MessagingNode {
         Thread serverThread = new Thread(server);
         serverThread.start();
 
-        InputHandler inputHanlder = new InputHandler();
-        Thread inputHandlerThread = new Thread(inputHanlder,"Input handler Thread");
-        inputHandlerThread.start();
+         MsgNodeCLI cli = new MsgNodeCLI(self);
+         Thread cliThread = new Thread(cli);
+         cliThread.start();
 
         //messagingnodes need serverthreads too (to listen to for connections between other messagingNodes)
-
-       inputHandlerThread.join();
-        serverThread.join();
-        
     }
 
     private static void initiateServerSocket() { 
@@ -105,8 +102,6 @@ public class MessagingNode {
     }
     
     private static void sendRegisterRequest() throws IOException {
-        System.out.println("Sending request with IP = " + InetAddress.getLocalHost().getHostAddress());
-        System.out.println("and port = " + serverPort);
         RegisterRequest registerRequest = new RegisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] registeryMessage = registerRequest.setBytes();
         sender.sendData(registeryMessage);
@@ -117,13 +112,11 @@ public class MessagingNode {
         for(int i = 0; i < connectionIPList.size(); ++i) {
             //need to parse the IP and the INT
             String connectIP = connectionIPList.get(i).trim();
-            System.out.println("Node IP = " + connectIP);
             
             int connectPort = connectionPortList.get(i); 
-            System.out.println("node port  = " + connectPort);
-            //connect the mf socket 
+            
             Socket connectedNode = new Socket(connectIP, connectPort);
-            //create a registered node and add it to the list
+           
             PeerNode newConnection;
             try {
                 newConnection = new PeerNode(connectedNode, self, connectPort);
@@ -147,10 +140,7 @@ public class MessagingNode {
     public static void initiateTask(int rounds) {
         //im going to assume that every round is five messages
         Random rand = new Random();
-        if(self.peerNodes.size() > 0) {
-            System.out.println(self.peerNodes.get(0).socket.getInetAddress().getHostAddress());
-            System.out.println(self.peerNodes.get(0).socket.getPort());
-        }
+       
         for(int i = 0; i < rounds; ++i) {
             for(int j = 0; j < 5; ++j) {
                 int payload = rand.nextInt();
@@ -167,46 +157,47 @@ public class MessagingNode {
 
             }
         }
-
-        System.out.println("TASK DONE");
-        System.out.println("num sent = " + self.messagesSent);
-        System.out.println("num received = " + self.messagesReceived);
-        System.out.println("sum of sent = " + self.messagesSentSum);
-        System.out.println("sum of received = " + self.messagesReceivedSum);
+        try {
+            Thread.sleep(3000);
+            System.out.println("sending task complete");
+            self.sendTaskComplete();
+        } catch (InterruptedException | IOException e) {
+            // TODO Auto-generated catch block
+            System.out.println(e.getMessage());
+        }
+        
     }
 
     public void processMessage(int payload) {
-        /*
-         * in the future this will take a string as input
-         * it will determine if its the sink by deleting -'s,
-         *      then spliiting into a string array, and if its IP is the last index
-         *       then it is the sink, if not, it will pass the message to the IP that is after its own!
-         */
-
-         messagesReceivedSum += payload;
-         messagesReceived += 1;
-
+         self.messagesReceivedSum += payload;
+         self.messagesReceived += 1;
     }
 
+    public void sendDeregisterRequest() throws IOException {
+        DeregisterRequest request = new DeregisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
+        byte[] marshalledRequest = request.setBytes();
+        sender.sendData(marshalledRequest);
+    }
 
-    /* 
-    public void createAndAddNode(Socket socket, RegisterRequest request) {
+    public static void sendTrafficSummary() {
+        System.out.println("ive been asked for my summary and I am sending it");
+        TrafficSummary summary = null;
         try {
-            System.out.println("Registry has been called to create a node with port number = " + request.portNumber);
-            PeerNode registeredNode = new PeerNode(socket, this);
-            peerNodes.add(registeredNode);
-            TCPSender registerConfirmation = new TCPSender(socket);
-            RegisterResponse registerResponse = new RegisterResponse((byte)1, "Registration successful, there are (" + peerNodes.size() + ") nodes in the overlay");
-            byte[] marhalledData = registerResponse.setBytes();
-            registerConfirmation.sendData(marhalledData);
+            summary = new TrafficSummary(self.messagesSent, self.messagesReceived, self.messagesSentSum, self.messagesReceivedSum);
+            byte[] marshalledSummary = summary.setBytes();
+            sender = new TCPSender(registrySocket);
+            sender.sendData(marshalledSummary);
+            System.out.println("kust sent summary");
         } catch(IOException ioe) {
             System.out.println(ioe.getMessage());
-        } 
+        }
     }
-    */
 
-
-    public static void addPeerNode() {
-
+    private void sendTaskComplete() throws IOException {
+        TaskComplete message = new TaskComplete(InetAddress.getLocalHost().getHostAddress(), serverPort);
+        byte[] marshalledMessage = message.setBytes();
+        sender.sendData(marshalledMessage);
     }
+
+
 }
