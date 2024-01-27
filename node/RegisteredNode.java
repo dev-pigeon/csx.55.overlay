@@ -10,6 +10,7 @@ public class RegisteredNode {
    public Socket socket;
    public String ipAddress;
    int portNum;
+   Object owner;
    
    /* updated note
       registered nodes are nothing more than the Object representation of a messaging node that is connected to 
@@ -19,15 +20,18 @@ public class RegisteredNode {
 
     //you may find yourself wondering how we deal with the R response in the msg node since we dont have an owner
     //the asnwer is we don't we just need to print, and since that obj is on the msg node machine, it will print
-   public RegisteredNode(Socket socket) throws IOException {
+   public RegisteredNode(Socket socket, Object owner) throws IOException {
       this.socket = socket;
       this.ipAddress = socket.getInetAddress().getHostAddress();
+      this.portNum = socket.getPort();
+      this.owner = owner;
+
       setUpandRun(); 
    }
 
    public void setUpandRun() throws IOException {
       //create the receiver thread
-      TCPReceiverThread receiver = new TCPReceiverThread(socket, this);
+      TCPReceiverThread receiver = new TCPReceiverThread(socket, owner, this);
       Thread receiverThread = new Thread(receiver);
       receiverThread.start();
    }

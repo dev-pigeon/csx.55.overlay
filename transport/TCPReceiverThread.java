@@ -21,17 +21,17 @@ public class TCPReceiverThread implements Runnable {
 
     private Socket socket;
     private DataInputStream din;
-    private ArrayList<RegisteredNode> registeredNodes;
+   
     private Object owner;
+    private RegisteredNode node;
     //it will eventually change to the object for dikjstra
-    private String originIP;
 
-    public TCPReceiverThread(Socket socket, Object owner) throws IOException {
+
+    public TCPReceiverThread(Socket socket, Object owner, RegisteredNode node) throws IOException {
         this.socket = socket;
-        din = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-        originIP = socket.getInetAddress().getHostAddress();
-        this.registeredNodes = registeredNodes;
+        din = new DataInputStream(new BufferedInputStream(socket.getInputStream()));       
         this.owner = owner;
+        this.node = node;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class TCPReceiverThread implements Runnable {
                 
                 event.getBytes(marshalledData); 
                 //call handle event based on the type that it is
-                event.handleEvent(owner); //diff events will call methods based on input of owner (change owner to a literal instance of registry or msg node)
+                event.handleEvent(owner, node); //diff events will call methods based on input of owner (change owner to a literal instance of registry or msg node)
                 
             } catch(SocketException se) {
                 System.out.println(se.getMessage());

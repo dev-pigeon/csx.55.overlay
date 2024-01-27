@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import node.MessagingNode;
+import node.RegisteredNode;
 
 public class Messaging_Nodes_List implements Event {
 
@@ -115,9 +116,9 @@ public class Messaging_Nodes_List implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner)  {
+    public void handleEvent(Object owner, RegisteredNode node)  {
         try {
-            MessagingNode.addConnectionProtocol(connectionIPList, connectionPortList);
+            ((MessagingNode)owner).addConnectionProtocol(connectionIPList, connectionPortList);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

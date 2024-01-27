@@ -8,6 +8,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import node.RegisteredNode;
 import node.Registry;
 
 public class TaskComplete implements Event{
@@ -75,10 +76,8 @@ public class TaskComplete implements Event{
     }
 
     @Override
-    public void handleEvent(Object owner) {
-        Registry.checkTaskComplete();
+    public void handleEvent(Object owner,RegisteredNode node) {
+        ((Registry)owner).checkTaskComplete();
     }
-
-
 }
 

@@ -73,11 +73,13 @@ public class DeregisterRequest implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner) {
+    public void handleEvent(Object owner, RegisteredNode node) {
         //this is always gonna be the registry but I like "defensive" programming
        //only a registered node will receive these
        
-       Registry.checkDeregisterRequest(ipAddress, port, (RegisteredNode) owner);
+       if(owner instanceof Registry) {
+         ((Registry)owner).checkDeregisterRequest(ipAddress, port, node);
+       }
     }
 
 }

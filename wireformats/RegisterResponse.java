@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import node.MessagingNode;
+import node.RegisteredNode;
 
 public class RegisterResponse implements Event {
 
@@ -88,7 +89,7 @@ public class RegisterResponse implements Event {
 
     }
     @Override
-    public void handleEvent(Object owner) {
+    public void handleEvent(Object owner,RegisteredNode node) {
         //print the contents of the response to the screen
         System.out.println(info);
     }

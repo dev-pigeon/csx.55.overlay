@@ -42,7 +42,7 @@ public class TCPServerThread implements Runnable {
             //create a registered node
             try {
                // System.out.println("creating registered node");
-                RegisteredNode potentialNode = new RegisteredNode(socket);
+                RegisteredNode potentialNode = new RegisteredNode(socket, owner);
             } catch (IOException ioe) {
                 
                 System.out.println("Problem in creating a registered node");
@@ -54,9 +54,10 @@ public class TCPServerThread implements Runnable {
              try {
                 //WE ARE SETTING PORT = TO ZERO HERE BECAUSE WE DONT REALLY NEED TO KNOW THE PORT SINCE WE HAVE BEEN THE
                 //THAT WAS CONNECTED TO
-                PeerNode peerNode = new PeerNode(socket, (MessagingNode)owner, 0);
-                ((MessagingNode)owner).peerNodes.add(peerNode);
-            } catch (InterruptedException e) {
+                //turn this to registered nodes
+                RegisteredNode peerNode = new RegisteredNode(socket, owner);
+                ((MessagingNode)owner).peerNodes.add(peerNode); //only one thread (this one will ever do this)
+            } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }

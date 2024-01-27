@@ -95,11 +95,10 @@ public class RegisterRequest implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner) {
+    public void handleEvent(Object owner, RegisteredNode node) {
         //the owner of this is going to be the registered node since Req request will only be sent to these guys
         //therefor its safe to just cast that john
         //System.out.println("I am calling validate node with IP = " + ipAddress + " and portnumber = " + portNumber);
-        Registry.ValidateNode((RegisteredNode)owner, ipAddress, portNumber);
-
+        ((Registry)owner).ValidateNode(node, ipAddress, portNumber);
     }    
 }

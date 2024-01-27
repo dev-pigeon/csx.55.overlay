@@ -86,7 +86,7 @@ public class Registry {
                 serverSocket = new ServerSocket(initialPort);
                 found = true;
             } catch(IOException ioe) {
-                System.out.println("incrementing");
+                //System.out.println("incrementing");
                 ++initialPort;
             }
         }
@@ -142,7 +142,7 @@ public class Registry {
         
     }
 
-    public static void ValidateNode(RegisteredNode potentialNode, String requestIP, int requestPort) {
+    public synchronized void ValidateNode(RegisteredNode potentialNode, String requestIP, int requestPort) {
 
         //check if the IP in the object/socket is diff from the request, if so kill his ass
         //System.out.println("i was successfully called");
@@ -163,7 +163,7 @@ public class Registry {
 
     }
 
-    private static void GenerateRegistrationResponse(RegisteredNode potentialNode, byte status, String message) {
+    private void GenerateRegistrationResponse(RegisteredNode potentialNode, byte status, String message) {
         try {
             TCPSender sender = new TCPSender(potentialNode.socket);
             RegisterResponse response = new RegisterResponse(status, message);
@@ -175,7 +175,7 @@ public class Registry {
         }
    }
 
-   private static void RegisterNode(RegisteredNode potentialNode, int registerPort) {
+   private void RegisterNode(RegisteredNode potentialNode, int registerPort) {
         //update that guys port
         potentialNode.setPortNum(registerPort);
         //add him and generate the response
@@ -185,7 +185,7 @@ public class Registry {
         GenerateRegistrationResponse(potentialNode, (byte)1, message);
    }
 
-   public static synchronized void checkDeregisterRequest(String ip, int port, RegisteredNode node) {
+   public synchronized void checkDeregisterRequest(String ip, int port, RegisteredNode node) {
         if(!registeredNodes.contains(node)) {
             String message = "ERROR: Deregistration Request failed. Node was not in registry.";
             GenerateRegistrationResponse(node, (byte)0, message);
@@ -200,9 +200,9 @@ public class Registry {
     
    }
 
-   public static void checkTaskComplete() {
+   public synchronized void checkTaskComplete() {
     ++numTaskComplete;
-    System.out.println("number of task completes is " + numTaskComplete);
+   // System.out.println("number of task completes is " + numTaskComplete);
     if(numTaskComplete == registeredNodes.size()) {
         try {
             Thread.sleep(15000);
@@ -215,7 +215,7 @@ public class Registry {
    }
    private static void pullTrafficSummary() throws IOException {
     PullTrafficSummary summaryRequest = new PullTrafficSummary();
-    System.out.println("sending pull traffic summary");
+   // System.out.println("sending pull traffic summary");
     byte[] summaryRequestBytes = summaryRequest.setBytes();
     for(RegisteredNode node : registeredNodes) {
         TCPSender sender = new TCPSender(node.socket);
@@ -224,21 +224,20 @@ public class Registry {
 
    }
 
-   public static synchronized void storeTrafficSummary(String summary) {
-    
+   public /*synchronized*/ void storeTrafficSummary(String summary) {
 
-    System.out.println("receiving summary");
+    //System.out.println("receiving summary");
     String nodeSummary = "Node " + Integer.toString(numSummaryReceived) + " " + summary;
     summaryList.add(nodeSummary);
     ++numSummaryReceived;
-    System.out.println("number of summaries = " + numSummaryReceived);
+   // System.out.println("number of summaries = " + numSummaryReceived);
     if(numSummaryReceived == registeredNodes.size()) {
         printTrafficSummary();
     }
 
    }
 
-   private static synchronized void printTrafficSummary() {
+   private synchronized void printTrafficSummary() {
     for(String summary : summaryList) {
         System.out.println(summary);
     }

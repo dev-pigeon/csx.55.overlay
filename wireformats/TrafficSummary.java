@@ -8,6 +8,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import node.RegisteredNode;
 import node.Registry;
 
 public class TrafficSummary implements Event {
@@ -24,7 +25,10 @@ public class TrafficSummary implements Event {
     }
 
     public TrafficSummary(int numSent, int numReceived, /*int numRelayed,*/ long sumSent, long sumReceived /*, long sumRelayed*/ ) {
-
+        this.numSent = numSent;
+        this.numReceived = numReceived;
+        this.sumSent = sumSent;
+        this.sumReceived = sumReceived;
     }
 
     @Override
@@ -84,10 +88,11 @@ public class TrafficSummary implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner) {
-        System.out.println("got it in wireformat");
+    public void handleEvent(Object owner,RegisteredNode node) {
+        
         String summary = Integer.toString(numSent) + " " + Integer.toString(numReceived) + " " + Long.toString(sumSent) + " " + Long.toString(sumReceived);
-        Registry.storeTrafficSummary(summary);
+        
+        ((Registry)owner).storeTrafficSummary(summary);
     }
 
 }

@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import node.MessagingNode;
+import node.RegisteredNode;
 
 public class PullTrafficSummary implements Event {
     int type = 7;
@@ -50,7 +51,7 @@ public class PullTrafficSummary implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner) { 
-       MessagingNode.sendTrafficSummary();
+    public void handleEvent(Object owner,RegisteredNode node) {
+       ((MessagingNode)owner).sendTrafficSummary();
     }
 }

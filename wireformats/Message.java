@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import node.MessagingNode;
+import node.RegisteredNode;
 
 public class Message implements Event{
 
@@ -64,16 +65,10 @@ public class Message implements Event{
     }
 
     @Override
-    public void handleEvent(Object owner) {
+    public void handleEvent(Object owner, RegisteredNode node) {
         if(owner instanceof MessagingNode) {
-             ((MessagingNode)owner).messagesReceived += 1;
-             ((MessagingNode)owner).messagesReceivedSum += payload;
-            
-           
-        } else {
-             ((MessagingNode)owner).messagesReceived += 1;
-             ((MessagingNode)owner).messagesReceivedSum += payload;
-        }
+              ((MessagingNode)owner).incrementReceivedStats(payload);
+        } 
     }
     
 }

@@ -45,7 +45,7 @@ public class MessagingNode {
 
     private static TCPSender sender;
 
-   public ArrayList<PeerNode> peerNodes = new ArrayList<>();
+   public ArrayList<RegisteredNode> peerNodes = new ArrayList<>();
 
     RegisteredNode registryConnectionNode;
 
@@ -70,7 +70,7 @@ public class MessagingNode {
         //System.out.println("connected to server!");
         sender = new TCPSender(registrySocket);
 
-        registryConnectionNode = new RegisteredNode(registrySocket); //this node is what you receive form registry on!
+        registryConnectionNode = new RegisteredNode(registrySocket, this); //this node is what you receive form registry on!
 
         sendRegisterRequest();
 
@@ -108,7 +108,7 @@ public class MessagingNode {
     }  
 
     //this will now accept two ArrayLists, one for IP and one for port, they correspond
-    public static void addConnectionProtocol(ArrayList<String> connectionIPList, ArrayList<Integer> connectionPortList) throws IOException{
+    public void addConnectionProtocol(ArrayList<String> connectionIPList, ArrayList<Integer> connectionPortList) throws IOException{
         for(int i = 0; i < connectionIPList.size(); ++i) {
             //need to parse the IP and the INT
             String connectIP = connectionIPList.get(i).trim();
@@ -117,11 +117,13 @@ public class MessagingNode {
             
             Socket connectedNode = new Socket(connectIP, connectPort);
            
-            PeerNode newConnection;
+            RegisteredNode newConnection;
             try {
-                newConnection = new PeerNode(connectedNode, self, connectPort);
+
+                newConnection = new RegisteredNode(connectedNode, self); //fuck that
+                newConnection.setPortNum(connectPort);
                 self.peerNodes.add(newConnection);
-            } catch (InterruptedException e) {
+            } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
@@ -137,7 +139,7 @@ public class MessagingNode {
         System.out.println("All connections are established. Number of connections " + self.peerNodes.size());
     }
 
-    public static void initiateTask(int rounds) {
+    public void initiateTask(int rounds) {
         //im going to assume that every round is five messages
         Random rand = new Random();
        
@@ -159,7 +161,7 @@ public class MessagingNode {
         }
         try {
             Thread.sleep(3000);
-            System.out.println("sending task complete");
+            //System.out.println("sending task complete");
             self.sendTaskComplete();
         } catch (InterruptedException | IOException e) {
             // TODO Auto-generated catch block
@@ -179,15 +181,15 @@ public class MessagingNode {
         sender.sendData(marshalledRequest);
     }
 
-    public static void sendTrafficSummary() {
-        System.out.println("ive been asked for my summary and I am sending it");
+    public void sendTrafficSummary() {
+        //System.out.println("ive been asked for my summary and I am sending it");
         TrafficSummary summary = null;
         try {
             summary = new TrafficSummary(self.messagesSent, self.messagesReceived, self.messagesSentSum, self.messagesReceivedSum);
             byte[] marshalledSummary = summary.setBytes();
             sender = new TCPSender(registrySocket);
             sender.sendData(marshalledSummary);
-            System.out.println("kust sent summary");
+           // System.out.println("kust sent summary");
         } catch(IOException ioe) {
             System.out.println(ioe.getMessage());
         }
@@ -197,6 +199,11 @@ public class MessagingNode {
         TaskComplete message = new TaskComplete(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] marshalledMessage = message.setBytes();
         sender.sendData(marshalledMessage);
+    }
+
+    public synchronized void incrementReceivedStats(long payload) {
+        messagesReceived+=1;
+        messagesReceivedSum+=payload;
     }
 
 

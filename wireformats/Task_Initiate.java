@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import node.MessagingNode;
+import node.RegisteredNode;
 
 public class Task_Initiate implements Event {
 
@@ -67,11 +68,9 @@ public class Task_Initiate implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner) {
-        
+    public void handleEvent(Object owner,RegisteredNode node) {
             System.out.println("I am initiating task with " + rounds + " rounds");
-            MessagingNode.initiateTask(rounds);
-        
+            ((MessagingNode)owner).initiateTask(rounds);
     }
     
 }
