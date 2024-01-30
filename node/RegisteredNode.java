@@ -2,38 +2,41 @@ package node;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import transport.TCPReceiverThread;
 
 public class RegisteredNode {
     
    public Socket socket;
-   public String ipAddress;
+   public String ip;
    int portNum;
    Object owner;
+
+   HashMap<RegisteredNode,Integer> peerNodes = new HashMap<>();
+
    
-   /* updated note
-      registered nodes are nothing more than the Object representation of a messaging node that is connected to 
-      the registry, but they need their own receivers so that the sister node (in msgNode) can send their request
-      and so these guys can send their response
-    */
+   public RegisteredNode(Object owner, String ip, int port) {
+      this(null, owner, ip, port);
+   }
 
-    //you may find yourself wondering how we deal with the R response in the msg node since we dont have an owner
-    //the asnwer is we don't we just need to print, and since that obj is on the msg node machine, it will print
-   public RegisteredNode(Socket socket, Object owner) throws IOException {
+
+   public RegisteredNode(Socket socket, Object owner, String ip, int port) {
       this.socket = socket;
-      this.ipAddress = socket.getInetAddress().getHostAddress();
-      this.portNum = socket.getPort();
       this.owner = owner;
-
-      setUpandRun(); 
+      this.ip = ip;
+      this.portNum = port;
    }
 
    public void setUpandRun() throws IOException {
       //create the receiver thread
-      TCPReceiverThread receiver = new TCPReceiverThread(socket, owner, this);
-      Thread receiverThread = new Thread(receiver);
-      receiverThread.start();
+      if(socket!=null) {
+         TCPReceiverThread receiver = new TCPReceiverThread(socket, owner, this);
+         Thread receiverThread = new Thread(receiver);
+         receiverThread.start();
+      }
+      
    }
 
    //this is needed because when the Registry's R node gets the request we have to have their ServerSockets port num set 

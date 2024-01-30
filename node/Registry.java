@@ -103,7 +103,7 @@ public class Registry {
             //populate the list
             ArrayList<String> connectionIPList = new ArrayList<>();
             ArrayList<Integer> connectionPortList = new ArrayList<>();
-            connectionIPList.add(registeredNodes.get(1).ipAddress);
+            connectionIPList.add(registeredNodes.get(1).ip);
             connectionPortList.add(registeredNodes.get(1).portNum);
                         
             Messaging_Nodes_List messaging_Nodes_List = new Messaging_Nodes_List(connectionIPList, connectionPortList, connectionIPList.size());
@@ -121,7 +121,7 @@ public class Registry {
 
     public void listRegisteredNodes() {
         for(int i = 0; i < registeredNodes.size(); ++i) {
-            System.out.println(registeredNodes.get(i).ipAddress + " on port " + registeredNodes.get(i).socket.getPort());
+            System.out.println(registeredNodes.get(i).ip + " on port " + registeredNodes.get(i).socket.getPort());
         }
     } 
     
@@ -153,7 +153,10 @@ public class Registry {
         }
         //check if it is already registered, loop our list of current guys and check if this one has a mathcing IP and port, if so KILL HIS ASS
         for(int i = 0; i < registeredNodes.size(); ++i) {
-            if((registeredNodes.get(i).ipAddress).equals(requestIP) && (registeredNodes.get(i).portNum == requestPort)) {
+            //System.out.println(i + " " + registeredNodes.get(i).portNum);
+            //System.out.println(registeredNodes.get(i).ip);
+
+            if((registeredNodes.get(i).ip).equals(requestIP) && (registeredNodes.get(i).portNum == requestPort)) {
                 String error = "ERROR: This IP address and port are already registered with the registy.";
                 GenerateRegistrationResponse(potentialNode, (byte) 0, error);
                 return;
@@ -242,4 +245,5 @@ public class Registry {
         System.out.println(summary);
     }
    }
+
 }

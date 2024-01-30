@@ -45,7 +45,7 @@ public class MessagingNode {
 
     private static TCPSender sender;
 
-   public ArrayList<RegisteredNode> peerNodes = new ArrayList<>();
+   public ArrayList<RegisteredNode> nodes = new ArrayList<>();
 
     RegisteredNode registryConnectionNode;
 
@@ -70,8 +70,8 @@ public class MessagingNode {
         //System.out.println("connected to server!");
         sender = new TCPSender(registrySocket);
 
-        registryConnectionNode = new RegisteredNode(registrySocket, this); //this node is what you receive form registry on!
-
+        registryConnectionNode = new RegisteredNode(registrySocket, this, regInetAddress.getHostAddress(), registryPort); //this node is what you receive form registry on!
+        registryConnectionNode.setUpandRun();
         sendRegisterRequest();
 
         
@@ -120,11 +120,10 @@ public class MessagingNode {
             RegisteredNode newConnection;
             try {
 
-                newConnection = new RegisteredNode(connectedNode, self); //fuck that
-                newConnection.setPortNum(connectPort);
-                self.peerNodes.add(newConnection);
+                newConnection = new RegisteredNode(connectedNode, this, connectedNode.getInetAddress().getHostAddress(), connectedNode.getPort());
+                nodes.add(newConnection);
+                newConnection.setUpandRun();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             
@@ -136,7 +135,7 @@ public class MessagingNode {
             
         }
 
-        System.out.println("All connections are established. Number of connections " + self.peerNodes.size());
+        System.out.println("All connections are established. Number of connections " + nodes.size());
     }
 
     public void initiateTask(int rounds) {
@@ -149,7 +148,7 @@ public class MessagingNode {
                 Message msg = new Message(payload);
                 try {
                     byte[] message = msg.setBytes();
-                    TCPSender sender = new TCPSender(self.peerNodes.get(0).socket);
+                    TCPSender sender = new TCPSender(nodes.get(0).socket);
                     sender.sendData(message);
                     self.messagesSent+=1;
                     self.messagesSentSum += payload;
