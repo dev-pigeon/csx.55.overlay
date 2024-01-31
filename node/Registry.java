@@ -42,6 +42,8 @@ public class Registry {
     private static ArrayList<String> summaryList = new ArrayList<>();;
   
     public static ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
+
+    private OverlayCreator overlayCreator;
     public static void main(String[] args) throws IOException, InterruptedException {
        
        Registry registry = new Registry();
@@ -93,30 +95,9 @@ public class Registry {
     }
 
     public void setupOverlayProtocol(int numConnections) {
-      //  System.out.println("there are " + registeredNodes.size() + " nodes ");
-       // System.out.println("received that this should happen with num = " + numConnections);
-        //connect the node in position 0 to position
-        try {
-
-            TCPSender sender = new TCPSender(registeredNodes.get(0).socket);
-            //I have a sender for message A, so I need to send B's info 
-            //populate the list
-            ArrayList<String> connectionIPList = new ArrayList<>();
-            ArrayList<Integer> connectionPortList = new ArrayList<>();
-            connectionIPList.add(registeredNodes.get(1).ip);
-            connectionPortList.add(registeredNodes.get(1).portNum);
-                        
-            Messaging_Nodes_List messaging_Nodes_List = new Messaging_Nodes_List(connectionIPList, connectionPortList, connectionIPList.size());
-            byte[] marshalledData = messaging_Nodes_List.setBytes();
-            sender.sendData(marshalledData);
-            
-            //both lists will ALWAYS BE THE SAME SIZE
-
-            
-            
-        } catch(IOException ioe) {
-            System.out.println(ioe.getMessage());
-        }
+       overlayCreator = new OverlayCreator(registeredNodes, numConnections);
+       overlayCreator.buildOverlay();
+       //call make connectionMessages from here (but it is overlaycreator and make it return something)
     }
 
     public void listRegisteredNodes() {

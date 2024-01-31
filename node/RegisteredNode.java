@@ -14,7 +14,7 @@ public class RegisteredNode {
    int portNum;
    Object owner;
 
-   HashMap<RegisteredNode,Integer> peerNodes = new HashMap<>();
+   public HashMap<RegisteredNode,Integer> peerNodes = new HashMap<>();
 
    
    public RegisteredNode(Object owner, String ip, int port) {
