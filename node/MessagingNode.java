@@ -107,35 +107,45 @@ public class MessagingNode {
         sender.sendData(registeryMessage);
     }  
 
-    //this will now accept two ArrayLists, one for IP and one for port, they correspond
-    public void addConnectionProtocol(ArrayList<String> connectionIPList, ArrayList<Integer> connectionPortList) throws IOException{
-        for(int i = 0; i < connectionIPList.size(); ++i) {
-            //need to parse the IP and the INT
-            String connectIP = connectionIPList.get(i).trim();
+    public void addConnectionProtocol(ArrayList<String> connectionList) throws IOException{
+
+
+        for(int i = 0; i < connectionList.size(); ++i) {
             
-            int connectPort = connectionPortList.get(i); 
-            
-            Socket connectedNode = new Socket(connectIP, connectPort);
+            String address = parseIPAddress(connectionList.get(i));
+            int port = parsePortNumber(connectionList.get(i));
+            Socket connectedNode = new Socket(address.trim(), port);
            
             RegisteredNode newConnection;
             try {
-
                 newConnection = new RegisteredNode(connectedNode, this, connectedNode.getInetAddress().getHostAddress(), connectedNode.getPort());
                 nodes.add(newConnection);
                 newConnection.setUpandRun();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            
-            //send a registration message to whoever you connected to so they can add YOU to the list
-            //RegisterRequest notification = new RegisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
-            //TCPSender sender = new TCPSender(connectedNode);
-            //byte[] message = notification.setBytes();
-            //sender.sendData(message);
-            
         }
-
         System.out.println("All connections are established. Number of connections " + nodes.size());
+    }
+
+    /*
+     * extracts the port number from a connection message by
+     * finding the findex of : and going i + 1 till the end of the string
+     */
+    private int parsePortNumber(String message) {
+        int port = 0;
+        int colonIndex = message.indexOf(":");
+        port = Integer.parseInt(message.substring(colonIndex + 1, message.length()));
+        return port;
+    }
+
+    /*
+     * same as above but it goes from 0-> index of :
+     */
+    private String parseIPAddress(String message) {
+        int colonIndex = message.indexOf(":");
+        String IP = message.substring(0, colonIndex);
+        return IP;
     }
 
     public void initiateTask(int rounds) {

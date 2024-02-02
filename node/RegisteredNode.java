@@ -11,10 +11,14 @@ public class RegisteredNode {
     
    public Socket socket;
    public String ip;
-   int portNum;
+   public int portNum;
    Object owner;
 
    public HashMap<RegisteredNode,Integer> peerNodes = new HashMap<>();
+
+   public ArrayList<RegisteredNode> conectionList = new ArrayList<>();
+
+   public ArrayList<String> connectionMessageList = new ArrayList<>();
 
    
    public RegisteredNode(Object owner, String ip, int port) {
@@ -43,5 +47,9 @@ public class RegisteredNode {
    //for when registry sends the Messaging list or whatever
    public void setPortNum(int portNum) {
       this.portNum = portNum;
+   }
+
+   public void addMemberToConnectionList(RegisteredNode toRemove) {   
+      conectionList.add(toRemove);
    }
 }

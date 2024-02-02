@@ -17,16 +17,19 @@ public class Messaging_Nodes_List implements Event {
     int type = 3;
     int numOfPeerNodes;
     //I will generate the node info list as a ArrayList<String> but just write the strings individually
-    ArrayList<String> connectionIPList = new ArrayList<>();
-    ArrayList<Integer> connectionPortList = new ArrayList<>();
+   
+    ArrayList<String> connectionList = new ArrayList<String>();
+
+    /*
+     * this is going to change to just be one ArrayList<String> called connection list
+     */
 
     public Messaging_Nodes_List() {
-        this(new ArrayList<String>(), new ArrayList<Integer>(), 0);
+        this(new ArrayList<String>(),0);
     }
 
-    public Messaging_Nodes_List(ArrayList<String> connectionIPList, ArrayList<Integer> connectionPortList, int numberOfConnections) {
-        this.connectionIPList = connectionIPList;
-        this.connectionPortList = connectionPortList;
+    public Messaging_Nodes_List(ArrayList<String> connectionList, int numberOfConnections) {
+        this.connectionList = connectionList;
         this.numOfPeerNodes = numberOfConnections;
     }
 
@@ -62,13 +65,13 @@ public class Messaging_Nodes_List implements Event {
         
         //write the stuffs
         for(int i = 0; i < numOfPeerNodes; ++i) {
-            byte[] ipBytes = connectionIPList.get(i).getBytes();
-            int ipLength = ipBytes.length;
-            dout.writeInt(ipLength);
-            dout.write(ipBytes);
-            int port = connectionPortList.get(i);
-           // System.out.println("writing port");
-            dout.writeInt(port);
+           //turn each index of connectionList into a byte array
+           String temp = connectionList.get(i);
+           byte[] connectionBytes = temp.getBytes();
+           int elementLengh = connectionBytes.length;
+
+           dout.writeInt(elementLengh);
+           dout.write(connectionBytes); 
         }
 
         //flush stream
@@ -94,21 +97,12 @@ public class Messaging_Nodes_List implements Event {
        // System.out.println("number of peer nodes = " + numOfPeerNodes);
         //read each of the node information and put into an array!
         for(int i = 0; i < numOfPeerNodes; ++i) {
-            
-            int ipLength = din.readInt();
-           // System.out.println("IP length = " + ipLength);
-            byte[] ipBytes = new byte[ipLength];
-            
-            din.readFully(ipBytes);
-            String connectionIP = new String(ipBytes);
-            //System.out.println("IP = " + connectionIP);
-            
-            //System.out.println("reading port");
-            int port = din.readInt();
-           
-            connectionIPList.add(connectionIP);
-            connectionPortList.add(port);
-           // System.out.println("finished");
+           //just read in all of the items 
+           int elementLengh = din.readInt();
+           byte[] messageBytes = new byte[elementLengh];
+           din.readFully(messageBytes);
+           String message = new String(messageBytes);
+           connectionList.add(message);
         }
 
         bArrayInputStream.close();
@@ -118,10 +112,9 @@ public class Messaging_Nodes_List implements Event {
     @Override
     public void handleEvent(Object owner, RegisteredNode node)  {
         try {
-            ((MessagingNode)owner).addConnectionProtocol(connectionIPList, connectionPortList);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            ((MessagingNode)owner).addConnectionProtocol(connectionList);
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
         }
            
     }

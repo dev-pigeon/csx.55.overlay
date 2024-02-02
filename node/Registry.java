@@ -98,6 +98,7 @@ public class Registry {
        overlayCreator = new OverlayCreator(registeredNodes, numConnections);
        overlayCreator.buildOverlay();
        //call make connectionMessages from here (but it is overlaycreator and make it return something)
+       
     }
 
     public void listRegisteredNodes() {
