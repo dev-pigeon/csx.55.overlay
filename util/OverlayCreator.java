@@ -1,7 +1,9 @@
 package util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 
 import node.*;
 
@@ -10,8 +12,9 @@ public class OverlayCreator {
     ArrayList<RegisteredNode> masterList;
     int connectionRequirement;
 
-    RegisteredNode candidat1;
-    RegisteredNode candidat2;
+    int min = 2; //form linear topology ensures everyone starts with 2 nodes
+    int max = 3; //max is always ONLY one more than min
+    Random rand = new Random(); //used to find random nodes 
 
     public OverlayCreator(ArrayList<RegisteredNode> nodes, int connectionRequirement) {
         this.masterList = nodes;
@@ -20,57 +23,79 @@ public class OverlayCreator {
 
 
     public void buildOverlay() {
+
+        if(masterList.size() <= connectionRequirement || ((masterList.size() * connectionRequirement) % 2 != 0)) {
+            System.out.println("ERROR: Impossible to generate overlay with given inputs");
+            return;
+        }
         formLinearTopology(); //tested function that works
         printAllSizes();
-        boolean done = false;
-        int maxCR = masterList.get(0).peerNodes.size() + 1;
-        System.out.println(meetRequirements(masterList.get(0).peerNodes.size()));
-        while(!done) {
-           
-            if(!meetRequirements(maxCR)) {
-                //make requirement
-            }
-            findCandidates();
+ 
+        
+        
 
-            if(candidat1 == null) {
-                done = true;
-            } else {
-                
-                if(masterList.indexOf(candidat2) == (masterList.indexOf(candidat1) + 1)) {
-                    System.out.println("our fun condition is reached");
-                    System.exit(0);
+        while(max <= connectionRequirement) {
+            RegisteredNode candidatOne = findCandidatOne();
+            RegisteredNode candidatTwo = findCandidate2(candidatOne);
+           
+            //we need a method to find a random candidat2 given that its not candidat1
+            //check if it returns null, if so we need to adjust the graph
+            if(candidatTwo == null) {
+                System.out.println("candidat two was not found!");
+                printAllSizes();
+                if(countUnderFundedNodes() == 1) {
+                    System.out.println("odd guy detected");
+                    printAllSizes();
+                    RegisteredNode fundedNode = findFundedNode(candidatOne);
+                    System.out.println("funded node is at  " + masterList.indexOf(fundedNode));
+                    System.out.println("candidatOne is at " + masterList.indexOf(candidatOne));
+                    formConnection(candidatOne, fundedNode, 0);
+                    printAllSizes();
+                } else {
+                    RegisteredNode underFundedNode = findUnderFundedNode(candidatOne);
+                    adjustOverlay(candidatOne, underFundedNode);
                 }
                 
-                
-                formConnection(candidat1, candidat2, 0);
-                
-                printAllSizes();
-                
+            } else {
+                //connect the two
+                formConnection(candidatOne, candidatTwo, 0);
             }
-        
-        candidat1 = null;
-        candidat2 = null;
-
-            
-            
+            checkForMax();
         }
-        //System.out.println(hasPartitions());
+
+        printAllSizes();
+       
     }
 
+    /* formLinearTopology()
+     * takes the master list and loops over it and makes a bilateral connection 
+     * at each index. After the loop it connects the front to the back to ensure every node
+     * has 2 connections to start
+     */
     private void formLinearTopology() {
-        //take the masterList and link all the nodes together like a doubly linked list
-        /* for a connection to be bilatoral using the peerNode hashmaps if
-        A is in B's map then B must be in A's map
-         */ 
-
         for(int i = 0; i < masterList.size()-1; ++i) {
-            //check if i == size() - 1
             formConnection(masterList.get(i), masterList.get(i+1), 0);
         }
 
         formConnection(masterList.get(0), masterList.get(masterList.size()-1), 0);
     }
+
+    private RegisteredNode findFundedNode(RegisteredNode candidat1) {
+        RegisteredNode funded = null;
+        for(int i = 0; i < masterList.size(); ++i) {
+            if((candidat1.peerNodes.containsKey(masterList.get(i)) == false) && (masterList.get(i).peerNodes.containsKey(candidat1) == false) && masterList.get(i) != candidat1) {
+                funded = masterList.get(i);
+                break;
+            }
+        }
+        return funded;
+    }
     
+    /*
+     * This method takes two nodes and a weight as input
+     * it then creates a bilateral connection with the two nodes 
+     * and sets the edge weight to weight
+     */
     private void formConnection(RegisteredNode nodeA, RegisteredNode nodeB, int weight) {
         if(nodeA == null) {
             System.out.println("Error:Node A of the nodes is null!");
@@ -80,31 +105,206 @@ public class OverlayCreator {
             System.out.println("Error: Node B of the nodes is null!");
             System.exit(0);
         }
-        
-      
         if (nodeA.peerNodes.get(nodeB) == null) {
             nodeA.peerNodes.put(nodeB, weight);
         }
-       
-    
         
         if (nodeB.peerNodes.get(nodeA) == null) {
             nodeB.peerNodes.put(nodeA, weight);
         }
-   
-
-      
     }
     
+    private void removePeer(RegisteredNode node1, RegisteredNode node2) {
+        System.out.println("before removal");
+        printAllSizes();
+        node1.peerNodes.remove(node2);
+        node2.peerNodes.remove(node1);
+        System.out.println("after removal");
+        printAllSizes();
+    }
+
+    /*
+     * This method uses the random int generator to 
+     * find a candidat that has a peerNodes.size()
+     * that is less than the current max
+     * Do not need to account for this not existing because unless
+     * the overlay is fully formed, there will always be at least one
+     */
+    private RegisteredNode findCandidatOne() {
+        RegisteredNode candidatOne = null;
+        while(true) {
+            int potentialNodeIndex = rand.nextInt(masterList.size());
+            if(masterList.get(potentialNodeIndex).peerNodes.size() < max) {
+                candidatOne = masterList.get(potentialNodeIndex);
+                break;
+            }
+        }
+        return candidatOne;
+    }
+
+    /*
+     * This method finds a random RegisteredNode and returns it on three conditions
+     * 1.) that node is not candidat1
+     * 2.) that node is not a peer of candidat1
+     * 3.) that node has peerNodes.size() < max
+     * be aware, there may not be a valid candidat2 so we must find a way to break if we go too long
+     * there is a hash set of all previously tried indexes, only run that index through
+     * the conditions if its not in there already
+     */
+
+     private RegisteredNode findCandidate2(RegisteredNode candidatOne) {
+        RegisteredNode candidatTwo = null;
+        HashSet<Integer> guessSet = new HashSet<>();
+        while(guessSet.size() != masterList.size()) {
+            int potentialNodeIndex = rand.nextInt(masterList.size());
+            //check if its a valid guess
+            if(guessSet.add(potentialNodeIndex) == true) {
+                //run the conditions
+                if((masterList.get(potentialNodeIndex) != candidatOne) && (candidatOne.peerNodes.containsKey(masterList.get(potentialNodeIndex)) == false) && (masterList.get(potentialNodeIndex).peerNodes.size() < max)) {
+                    //we found candidat two
+                    candidatTwo = masterList.get(potentialNodeIndex);
+                    break;
+                }
+
+            }
+            
+        }
+        return candidatTwo;
+        
+     }
+
+     /*
+      * this method simply checks if all nodes have peerNode.size() == to max
+      if so, it will increment both min and max by one
+      if not, it will return so the next candidates can be found
+      */
+
+      private void checkForMax() {
+        for(int i = 0; i < masterList.size(); ++i) {
+            if(masterList.get(i).peerNodes.size() < max) {
+                return;
+            }
+        }
+        ++max;
+        ++min;
+      }
+
+      private int countUnderFundedNodes() {
+        int count = 0;
+        for(int i = 0; i < masterList.size(); ++i) {
+            if(masterList.get(i).peerNodes.size() < max) {
+                ++count;
+            }
+        }
+        return count;
+      }
+
+    
+    private void printAllSizes() {
+        for(int i = 0; i < masterList.size(); i++) {
+            System.out.print(masterList.get(i).peerNodes.size());
+        } 
+        System.out.println();
+    }
+
+    /*
+     * this method will act very similarly for findCandidatTwo
+     * except it does not care about if its a neighbor to candidatOne
+     * because that is why we are in here!
+     */
+
+    private RegisteredNode findUnderFundedNode(RegisteredNode candidatOne) {
+        RegisteredNode underFundedNode = null;
+        HashSet<Integer> guessSet = new HashSet<>();
+        while(guessSet.size() != masterList.size()) {
+            int potentialNodeIndex = rand.nextInt(masterList.size());
+            //run the conditions
+            if((masterList.get(potentialNodeIndex) != candidatOne) && masterList.get(potentialNodeIndex).peerNodes.size() < max) {
+                underFundedNode = masterList.get(potentialNodeIndex);
+                break;
+            }
+        }
+        return underFundedNode;
+    }
+    
+    /*
+     * this method first finds a nodeX that either candidatOne or CandidatTwo will connect too
+     * it acheives this by looping the masterList from index 0 and returning the first one that 
+     * candidatOne OR candidatTwo is NOT connected to
+     * The method then calls findNodeY which is the node the other one will connect to
+     * then, nodeX and nodeY are disconnected and then re-connected to their appropriate nodes
+     */
+    
+     private void adjustOverlay(RegisteredNode candidatOne, RegisteredNode candidatTwo) {
+        RegisteredNode nodeX = null;
+        RegisteredNode nodeY = null;
+        while(true) {
+            //condition for candidatOne
+            int potentialNodeIndex = rand.nextInt(masterList.size());
+            if((masterList.get(potentialNodeIndex) != candidatOne) && (candidatOne.peerNodes.containsKey(masterList.get(potentialNodeIndex)) == false) && (masterList.get(potentialNodeIndex).peerNodes.size() == max)) {
+                //set node X and find node Y
+                nodeX = masterList.get(potentialNodeIndex);
+                //System.out.println("candidaz found at index = " + potentialNodeIndex);
+                nodeY = findNodeY(nodeX, candidatTwo);
+                if(nodeY != null) {
+                    //disconnect nodeY and nodeX
+                   // System.out.println("node X has a peerList of size " + nodeX.peerNodes.size());
+                   // System.out.println("Node Y has a peerlist of size  " + nodeY.peerNodes.size());
+                    removePeer(nodeX, nodeY);
+                    //connect candidat1 to nodeX
+                    System.out.println("Candidat one is about to connect with node x");
+                    printAllSizes();
+                    formConnection(candidatOne, nodeX, 0);
+                    System.out.println("candidat one just connected with node X");
+                    printAllSizes();
+                    //connect candidat2 to nodeY
+                    System.out.println("candidat two is about to connect with nodeY");
+                    printAllSizes();
+                    formConnection(candidatTwo, nodeY, 0);
+                    System.out.println("Candidat Two just connected with node Y");
+                    return;
+                } 
+                //condition for candidat Two
+            } if((masterList.get(potentialNodeIndex) != candidatTwo) && (candidatTwo.peerNodes.containsKey(masterList.get(potentialNodeIndex)) == false) && (masterList.get(potentialNodeIndex).peerNodes.size() == max)) {
+                //set nodeX and find node Y
+                nodeX = masterList.get(potentialNodeIndex);
+               // System.out.println("candidaz found at index = " + potentialNodeIndex);
+                nodeY = findNodeY(nodeX, candidatOne);
+                if(nodeY != null) {
+                    removePeer(nodeX, nodeY);
+                    formConnection(candidatTwo, nodeX, 0);
+                    printAllSizes();
+                    //connect candidatOne to nodeY
+                    formConnection(candidatOne, nodeY, 0);
+                    return;
+                }    
+            }
+           //FOR THE BENCH MARK FOUR WE NEED A CASE THAT DEALS WITH NO VALID NODES CAN BE FOUND, ITS VERY RARE
+
+        }
+    }
+
+    private RegisteredNode findNodeY(RegisteredNode nodeX, RegisteredNode otherCandidat) {
+        //we need to find a nodeY that is a peer of nodeX that otherCandidat is not connected to
+        RegisteredNode nodeY = null;
+        for(Map.Entry<RegisteredNode, Integer> entry : nodeX.peerNodes.entrySet()) {
+            if((entry != otherCandidat) && (otherCandidat.peerNodes.containsKey(entry.getKey()) == false) && entry.getKey().peerNodes.size() == max) {
+                nodeY = entry.getKey();
+                break;
+            }
+        }
+
+        return nodeY;
+    }
 
     public boolean hasPartitions() {
         //call DFS
         ArrayList<RegisteredNode> visistedNodes = new ArrayList<>();
         DFS(masterList.get(0), visistedNodes);
-        
+
         System.out.println();
-        
-        return masterList.equals(visistedNodes);
+
+        return masterList.size() == visistedNodes.size();
     }
 
     private void DFS(RegisteredNode current, ArrayList<RegisteredNode> visitedNodes) {
@@ -116,94 +316,4 @@ public class OverlayCreator {
             }
         }
     }
-
-
-    private void findCandidates() {
-        boolean foundFirst = false;
-        for (int i = 0; i < masterList.size(); ++i) {
-            if (masterList.get(i).peerNodes.size() < connectionRequirement) {
-                //System.out.println("candidate " + i + " has " + masterList.get(i).peerNodes.size());
-                if (!foundFirst) {
-                    candidat1 = masterList.get(i);
-                    foundFirst = true;
-                } else {
-                    if (candidat1 != null && candidat1.peerNodes.get(masterList.get(i)) == null && masterList.get(i).peerNodes.size() < connectionRequirement) {
-                        candidat2 = masterList.get(i);
-                    }
-                }
-            }
-        }
-
-        if(candidat2 == null && candidat1 != null) {
-            //if we are here it means that the last two are neighbors
-            //we need to set candidat two are neighbors, which means we need to find a new candidat2
-            //we do this by 
-            printAllSizes();
-            System.out.println("condition reached");
-            System.out.println("searching for alternate");
-            alternateCandidat2();
-        }
-
-
-        if(foundFirst == false) return;
-    
-    }
-    
-    private void alternateCandidat2() {
-        RegisteredNode neighborOfCandidat1 = masterList.get(masterList.indexOf(candidat1) + 1);
-        candidat2 = masterList.get(masterList.size()-1);
-        //we have candidat one is this case
-        //we need to find a node in candidat2 that neighborOf1 is not connected to
-        RegisteredNode candidat2Neighbor = null;
-        for (Map.Entry<RegisteredNode, Integer> entry : candidat2.peerNodes.entrySet()) {
-            RegisteredNode peerNode = entry.getKey();
-            if(neighborOfCandidat1.peerNodes.get(peerNode) == null) {
-                candidat2Neighbor = peerNode;
-                break;
-            }
-
-            
-        }
-
-            System.out.println("found a neighbor of candidat2");
-            System.out.println("candidat 1 is at " + masterList.indexOf(candidat1));
-            System.out.println("candiat 2 is at " + masterList.indexOf(candidat2));
-
-
-            
-            
-           removePeer(candidat2, candidat2Neighbor);
-           printAllSizes();
-        
-          
-           
-           
-        }
-        
-    
-
-    private void removePeer(RegisteredNode node1, RegisteredNode node2) {
-        node1.peerNodes.remove(node2);
-        node2.peerNodes.remove(node1);
-    }
-
-    public boolean meetRequirements(int requirement) {
-       
-        for(int i = 0; i < masterList.size(); ++i) {
-            if(masterList.get(i).peerNodes.size() != requirement) {
-                //System.out.println("position " + i + " does not meet CR and has " + masterList.get(i).peerNodes.size() + " connections");
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void printAllSizes() {
-        for(int i = 0; i < masterList.size(); i++) {
-            System.out.print(masterList.get(i).peerNodes.size());
-        } 
-        
-     
-        System.out.println();
-    }
-}
+ }
