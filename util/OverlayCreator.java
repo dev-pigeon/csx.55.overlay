@@ -29,11 +29,7 @@ public class OverlayCreator {
             return;
         }
         formLinearTopology(); //tested function that works
-        printAllSizes();
- 
-        
-        
-
+      
         while(max <= connectionRequirement) {
             RegisteredNode candidatOne = findCandidatOne();
             RegisteredNode candidatTwo = findCandidate2(candidatOne);
@@ -41,30 +37,19 @@ public class OverlayCreator {
             //we need a method to find a random candidat2 given that its not candidat1
             //check if it returns null, if so we need to adjust the graph
             if(candidatTwo == null) {
-                System.out.println("candidat two was not found!");
-                printAllSizes();
-                if(countUnderFundedNodes() == 1) {
-                    System.out.println("odd guy detected");
-                    printAllSizes();
+                if(countUnderFundedNodes() == 1) {           
                     RegisteredNode fundedNode = findFundedNode(candidatOne);
-                    System.out.println("funded node is at  " + masterList.indexOf(fundedNode));
-                    System.out.println("candidatOne is at " + masterList.indexOf(candidatOne));
                     formConnection(candidatOne, fundedNode, 0);
-                    printAllSizes();
                 } else {
                     RegisteredNode underFundedNode = findUnderFundedNode(candidatOne);
                     adjustOverlay(candidatOne, underFundedNode);
                 }
                 
             } else {
-                //connect the two
                 formConnection(candidatOne, candidatTwo, 0);
             }
             checkForMax();
         }
-
-        printAllSizes();
-       
     }
 
     /* formLinearTopology()
@@ -99,11 +84,11 @@ public class OverlayCreator {
     private void formConnection(RegisteredNode nodeA, RegisteredNode nodeB, int weight) {
         if(nodeA == null) {
             System.out.println("Error:Node A of the nodes is null!");
-            System.exit(0);
+            return;
         }
         if ( nodeB == null) {
             System.out.println("Error: Node B of the nodes is null!");
-            System.exit(0);
+            return;
         }
         if (nodeA.peerNodes.get(nodeB) == null) {
             nodeA.peerNodes.put(nodeB, weight);
@@ -115,12 +100,8 @@ public class OverlayCreator {
     }
     
     private void removePeer(RegisteredNode node1, RegisteredNode node2) {
-        System.out.println("before removal");
-        printAllSizes();
         node1.peerNodes.remove(node2);
         node2.peerNodes.remove(node1);
-        System.out.println("after removal");
-        printAllSizes();
     }
 
     /*
@@ -199,14 +180,6 @@ public class OverlayCreator {
         return count;
       }
 
-    
-    private void printAllSizes() {
-        for(int i = 0; i < masterList.size(); i++) {
-            System.out.print(masterList.get(i).peerNodes.size());
-        } 
-        System.out.println();
-    }
-
     /*
      * this method will act very similarly for findCandidatTwo
      * except it does not care about if its a neighbor to candidatOne
@@ -248,20 +221,11 @@ public class OverlayCreator {
                 nodeY = findNodeY(nodeX, candidatTwo);
                 if(nodeY != null) {
                     //disconnect nodeY and nodeX
-                   // System.out.println("node X has a peerList of size " + nodeX.peerNodes.size());
-                   // System.out.println("Node Y has a peerlist of size  " + nodeY.peerNodes.size());
                     removePeer(nodeX, nodeY);
                     //connect candidat1 to nodeX
-                    System.out.println("Candidat one is about to connect with node x");
-                    printAllSizes();
                     formConnection(candidatOne, nodeX, 0);
-                    System.out.println("candidat one just connected with node X");
-                    printAllSizes();
                     //connect candidat2 to nodeY
-                    System.out.println("candidat two is about to connect with nodeY");
-                    printAllSizes();
                     formConnection(candidatTwo, nodeY, 0);
-                    System.out.println("Candidat Two just connected with node Y");
                     return;
                 } 
                 //condition for candidat Two
@@ -273,7 +237,6 @@ public class OverlayCreator {
                 if(nodeY != null) {
                     removePeer(nodeX, nodeY);
                     formConnection(candidatTwo, nodeX, 0);
-                    printAllSizes();
                     //connect candidatOne to nodeY
                     formConnection(candidatOne, nodeY, 0);
                     return;
