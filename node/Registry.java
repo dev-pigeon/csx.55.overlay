@@ -12,26 +12,6 @@ import transport.*;
 import wireformats.*;
 
 
-
- //the server thread will listen for connections from possible messaging nodes
-        //upon a successful TCP connection the serverThread will create a registered node object
-        //this registered node object will be put into the list of registered nodes
-        //note there will be a RegistryCLI and a MessagingNodeCLI seperately in the util folder
-        //RegistryCLI will also contain the list of these registered node objects
-        //this is because at least one command requires the registry to send information to the messaging nodes
-            //who's connections are held by the socket in the registered node object in the list
-        //IMPORTANT NOTE -> LINK WEIGHTS ARE NOT KNOWN BY EACH MSGING NODE
-            //the first time that node A wants to send a packet to node X,
-            //it will query the Registry for the shortest path with a wireformat containing its IP and the IP of where it wants to go
-            //from there the reigstry will compute djkstras algortihm and return a String[] of IP addresses that is the shortest route
-            //this will then be sent back to the msging node and they'll route the package
-                //any other time Node A wants to go to node E, it will look up the route in the cache
-        //therefor, the receiver will need a reference to the list of Registered nodes
-            //and registered node objects only need to have a socket, ip, and port because they're used for communication
-            //a registered node can be identified my another msging node by its IP, or its spot in the list since the nodes
-            //are to send messages to RANDOM other msging nodes and for what I just explained above, Registered nodes dont need weight fields,
-            //theyre just used for sending shit to other messagingnodes
-
 public class Registry {
     //the values for port number and server address are passed from command line
     private static int port;
@@ -41,7 +21,10 @@ public class Registry {
     private static int numSummaryReceived = 0;
     private static ArrayList<String> summaryList = new ArrayList<>();;
   
-    public static ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
+    public  ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
+    public ArrayList<String> linkMessages = new ArrayList<String>();
+
+    private ConnectionMessageGenerator generator;
 
     private OverlayCreator overlayCreator;
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -95,10 +78,43 @@ public class Registry {
     }
 
     public void setupOverlayProtocol(int numConnections) {
-       overlayCreator = new OverlayCreator(registeredNodes, numConnections);
+       overlayCreator = new OverlayCreator(registeredNodes, linkMessages, numConnections);
        overlayCreator.buildOverlay();
-       //call make connectionMessages from here (but it is overlaycreator and make it return something)
        
+       //call the generator to generate the connection lists for each node
+       generator = new ConnectionMessageGenerator(registeredNodes);
+       generator.generateConnectionMessages();
+       
+        //call send connection messages
+        TCPSender sender;
+        for(int i = 0; i < registeredNodes.size(); ++i) {
+            //loop each indexes messages and send to their sockets!
+            Messaging_Nodes_List message = new Messaging_Nodes_List(registeredNodes.get(i).connectionMessageList, registeredNodes.get(i).connectionMessageList.size());
+            try {
+                byte[] marshalledMessage = message.setBytes();
+                sender = new TCPSender(registeredNodes.get(i).socket);
+                sender.sendData(marshalledMessage);
+            } catch(IOException ioe) {
+                System.out.println(ioe.getMessage());
+            }
+        }
+
+        overlayCreator.updateAllLinkWeights();
+        
+    }
+
+    public void sendLinkWeights() {
+        TCPSender sender;
+        Link_Weights linkWeights = new Link_Weights(linkMessages);
+        try {
+            byte[] marshalledWeights = linkWeights.setBytes();
+            for(int i = 0; i < registeredNodes.size(); ++i) {
+                sender = new TCPSender(registeredNodes.get(i).socket);
+                sender.sendData(marshalledWeights);
+            }
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
+        }
     }
 
     public void listRegisteredNodes() {
@@ -198,7 +214,7 @@ public class Registry {
     }
 
    }
-   private static void pullTrafficSummary() throws IOException {
+   private void pullTrafficSummary() throws IOException {
     PullTrafficSummary summaryRequest = new PullTrafficSummary();
    // System.out.println("sending pull traffic summary");
     byte[] summaryRequestBytes = summaryRequest.setBytes();
@@ -209,14 +225,15 @@ public class Registry {
 
    }
 
-   public /*synchronized*/ void storeTrafficSummary(String summary) {
+   public synchronized void storeTrafficSummary(String summary) {
 
     //System.out.println("receiving summary");
     String nodeSummary = "Node " + Integer.toString(numSummaryReceived) + " " + summary;
     summaryList.add(nodeSummary);
     ++numSummaryReceived;
-   // System.out.println("number of summaries = " + numSummaryReceived);
+    System.out.println("number of summaries = " + numSummaryReceived);
     if(numSummaryReceived == registeredNodes.size()) {
+      
         printTrafficSummary();
     }
 
@@ -227,5 +244,11 @@ public class Registry {
         System.out.println(summary);
     }
    }
+
+   public void listLinkWeights() {
+    for(int i = 0; i < linkMessages.size(); ++i) {
+        System.out.println(linkMessages.get(i));
+    }
+}
 
 }

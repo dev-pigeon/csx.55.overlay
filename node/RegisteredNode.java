@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import transport.TCPReceiverThread;
 
@@ -16,7 +18,7 @@ public class RegisteredNode {
 
    public HashMap<RegisteredNode,Integer> peerNodes = new HashMap<>();
 
-   public ArrayList<RegisteredNode> conectionList = new ArrayList<>();
+   public Set<RegisteredNode> conectionList = new HashSet<>();
 
    public ArrayList<String> connectionMessageList = new ArrayList<>();
 

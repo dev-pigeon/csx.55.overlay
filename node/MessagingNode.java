@@ -4,13 +4,16 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import transport.TCPSender;
 import transport.TCPServerThread;
 import util.InputHandler;
 import util.MsgNodeCLI;
+import util.OverlayCreator;
 import wireformats.*;
 
 /* TODO - now DONE
@@ -45,22 +48,28 @@ public class MessagingNode {
 
     private static TCPSender sender;
 
-   public ArrayList<RegisteredNode> nodes = new ArrayList<>();
+    public static HashMap<RegisteredNode, Integer> peerNodes = new HashMap<>();
 
     RegisteredNode registryConnectionNode;
 
      static MessagingNode self;
 
+     public ArrayList<RegisteredNode> masterList = new ArrayList<>();
+
+     ArrayList<String> linkMessages = new ArrayList<>();
+
+     OverlayCreator overlayCreator = new OverlayCreator(masterList, linkMessages, 0);
+
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
-         self = new MessagingNode();
+        self = new MessagingNode();
         self.start(args);  
     }
 
     private void start(String[] args) throws IOException, InterruptedException {
         initiateServerSocket(); //server socket is made
-        //create a listener for this guy for future messaging nodes
+        //create a listener for this guy for future messaging peerNodes
         
         regInetAddress = InetAddress.getByName(args[0]);
         System.out.println(regInetAddress);
@@ -94,6 +103,7 @@ public class MessagingNode {
             try {
                 serverSocket = new ServerSocket(initialPort);
                 serverPort = initialPort;
+                System.out.println(serverPort);
                 found = true;
             } catch(IOException ioe) {
                 ++initialPort;
@@ -119,13 +129,23 @@ public class MessagingNode {
             RegisteredNode newConnection;
             try {
                 newConnection = new RegisteredNode(connectedNode, this, connectedNode.getInetAddress().getHostAddress(), connectedNode.getPort());
-                nodes.add(newConnection);
+                addConnection(newConnection);
                 newConnection.setUpandRun();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("All connections are established. Number of connections " + nodes.size());
+        
+        try {
+            Thread.sleep(2000);
+            System.out.println("All connections are established. Number of connections " + peerNodes.size());
+        } catch(InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void addConnection(RegisteredNode node) {
+        peerNodes.put(node,0);
     }
 
     /*
@@ -150,18 +170,27 @@ public class MessagingNode {
 
     public void initiateTask(int rounds) {
         //im going to assume that every round is five messages
-        Random rand = new Random();
-       
+        
+       Random rand = new Random();
         for(int i = 0; i < rounds; ++i) {
             for(int j = 0; j < 5; ++j) {
                 int payload = rand.nextInt();
                 Message msg = new Message(payload);
                 try {
+                    //* note this works if n = k + 1. final step of this is to make this call djikstras with index, and that will return the path to sink  */
+                    //which you can extract IP of first relay node, and use that with sender
+                    //get route is going to return a String path, so we can create our message in here with payload / path
+                    //part of parsing the first node in the relay chain is returning the RegisteredNode in your mf peerNode list with that IP
+                    //this is because the nodes in masterList are just graph representations and don't have sockets
+
+                    int index = getRandomIndex();
                     byte[] message = msg.setBytes();
-                    TCPSender sender = new TCPSender(nodes.get(0).socket);
+                    RegisteredNode sink = parseFirstIP(index);
+                    TCPSender sender = new TCPSender(sink.socket);
                     sender.sendData(message);
                     self.messagesSent+=1;
                     self.messagesSentSum += payload;
+                    System.out.println("I just sent " + payload + " making my total " + messagesSentSum);
                 } catch(IOException ioe) {
 
                 }
@@ -179,18 +208,46 @@ public class MessagingNode {
         
     }
 
-    public void processMessage(int payload) {
-         self.messagesReceivedSum += payload;
-         self.messagesReceived += 1;
+    public RegisteredNode parseFirstIP(int index) {
+        RegisteredNode firstNode = null;
+        String IP = masterList.get(index).ip;
+
+        for(RegisteredNode entry : peerNodes.keySet()) {
+            if(entry.ip.equals(IP)) {
+                firstNode = entry;
+                break;
+            }
+        }
+        return firstNode;
     }
 
+    public int getRandomIndex() {
+        Random rand = new Random();
+        int index = -1;
+    
+        while(true) {
+            index = rand.nextInt(masterList.size());
+            
+            try {
+                RegisteredNode selectedNode = masterList.get(index);
+                if(!selectedNode.ip.equals(InetAddress.getLocalHost().getHostAddress()) || selectedNode.portNum != serverPort) {
+                    // The selected node is not the messaging node itself
+                    break;
+                }
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+        }
+        return index;
+    }
+    
     public void sendDeregisterRequest() throws IOException {
         DeregisterRequest request = new DeregisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] marshalledRequest = request.setBytes();
         sender.sendData(marshalledRequest);
     }
 
-    public void sendTrafficSummary() {
+    public synchronized void sendTrafficSummary() {
         //System.out.println("ive been asked for my summary and I am sending it");
         TrafficSummary summary = null;
         try {
@@ -213,7 +270,43 @@ public class MessagingNode {
     public synchronized void incrementReceivedStats(long payload) {
         messagesReceived+=1;
         messagesReceivedSum+=payload;
+        System.out.println("my sum is " + messagesReceivedSum);
     }
 
+    public void linkWeightProtocol(RegisteredNode nodeOne, RegisteredNode nodeTwo, int weight) throws UnknownHostException {
+        //checl for base case 
+        if(masterList.size() == 0) {
+            masterList.add(nodeOne);
+            masterList.add(nodeTwo);
+        }
 
+        RegisteredNode realNodeOne = findNode(nodeOne);
+        RegisteredNode realNodeTwo = findNode(nodeTwo);
+        //System.out.println("connection has been formed between  " + masterList.indexOf(realNodeOne) + " and " + masterList.indexOf(realNodeTwo) + " with a weight = " + weight);
+        overlayCreator.formConnection(realNodeOne, realNodeTwo, weight);
+        
+    }
+
+    public void listWeights() {
+        for(int i = 0; i < masterList.size(); ++i) {
+            for(RegisteredNode entry : masterList.get(i).peerNodes.keySet()) {
+                System.out.print(entry.portNum + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    private RegisteredNode findNode(RegisteredNode node) {
+        RegisteredNode realNode = null;
+        for(int i = 0; i < masterList.size(); ++i) {
+            if(masterList.get(i).ip.equals(node.ip) && masterList.get(i).portNum == node.portNum) {
+                realNode = masterList.get(i);
+                return realNode;
+            }
+        }
+
+        //node was not in master lst, add it
+        masterList.add(node);
+        return node;
+    }
 }

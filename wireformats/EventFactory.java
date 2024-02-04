@@ -34,6 +34,9 @@ public class EventFactory {
             case Task_Complete:
                 event = new TaskComplete();
                 break;
+            case Link_Weights:
+                event = new Link_Weights();
+                break;
             default:
                 break;
         }

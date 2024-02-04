@@ -1,8 +1,8 @@
 package util;
 
-import java.util.ArrayList;
-
 import node.*;
+
+import java.util.ArrayList;
 
 public class ConnectionMessageGenerator {
     
@@ -10,7 +10,6 @@ public class ConnectionMessageGenerator {
 
     public ConnectionMessageGenerator(ArrayList<RegisteredNode> masterList) {
         this.masterList = masterList;
-        System.out.println(masterList.size());
     }
 
     public void generateConnectionMessages() {
@@ -27,7 +26,6 @@ public class ConnectionMessageGenerator {
      * B will remove A from their list to ensure no duplicates
      */
     private void formExclusiveLists() {
-            printAllSizesofConnectionList();
             for(int i = 0; i < masterList.size(); ++i) {
                 RegisteredNode current = masterList.get(i);
                 for(RegisteredNode node : current.peerNodes.keySet()) {
@@ -37,7 +35,6 @@ public class ConnectionMessageGenerator {
                     }
                 }
             }
-            printAllSizesofConnectionList();
         }
 
     private void composeConnectionMessageLists() {
@@ -45,6 +42,7 @@ public class ConnectionMessageGenerator {
             RegisteredNode current = masterList.get(i);
             for(RegisteredNode node : current.conectionList) {
                 String connectionMessage = node.ip + ":" + node.portNum;
+                //System.out.println(connectionMessage);
                 current.connectionMessageList.add(connectionMessage);
             }
         }
@@ -58,8 +56,15 @@ public class ConnectionMessageGenerator {
     }
 
     void printAllSizesofMsgList() {
-        for(int i = 0; i < masterList.size(); ++i)  {
-            System.out.println(masterList.get(i).connectionMessageList.size());
+        for(int i = 0; i < masterList.size(); ++i) {
+            System.out.println("printing for node " + i);
+            RegisteredNode current = masterList.get(i);
+            for(String msg : current.connectionMessageList) {
+                System.out.println(msg);
+            }
+            System.out.println();
         }
     }
+
+    
 }

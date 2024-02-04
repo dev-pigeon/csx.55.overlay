@@ -39,6 +39,10 @@ public class RegisteryCLI implements Runnable {
             registry.listRegisteredNodes();
         } else if(commmandEntered.contains("start")) {
             handleStartProtocol(commmandEntered);
+        } else if(commmandEntered.equals("list-weights")) {
+            registry.listLinkWeights();
+        } else if(commmandEntered.equals("send-overlay-link-weights")) {
+            registry.sendLinkWeights();
         }
     }
 

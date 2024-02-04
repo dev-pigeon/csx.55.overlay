@@ -10,15 +10,17 @@ import node.*;
 public class OverlayCreator {
     
     ArrayList<RegisteredNode> masterList;
+    ArrayList<String> linkMessages;
     int connectionRequirement;
 
     int min = 2; //form linear topology ensures everyone starts with 2 nodes
     int max = 3; //max is always ONLY one more than min
     Random rand = new Random(); //used to find random nodes 
 
-    public OverlayCreator(ArrayList<RegisteredNode> nodes, int connectionRequirement) {
+    public OverlayCreator(ArrayList<RegisteredNode> nodes,ArrayList<String> linkMessages, int connectionRequirement) {
         this.masterList = nodes;
         this.connectionRequirement = connectionRequirement;
+        this.linkMessages = linkMessages;
     }
 
 
@@ -81,7 +83,7 @@ public class OverlayCreator {
      * it then creates a bilateral connection with the two nodes 
      * and sets the edge weight to weight
      */
-    private void formConnection(RegisteredNode nodeA, RegisteredNode nodeB, int weight) {
+    public void formConnection(RegisteredNode nodeA, RegisteredNode nodeB, int weight) {
         if(nodeA == null) {
             System.out.println("Error:Node A of the nodes is null!");
             return;
@@ -276,6 +278,26 @@ public class OverlayCreator {
         for(RegisteredNode peerNode : current.peerNodes.keySet()) {
             if(!visitedNodes.contains(peerNode)) {
                 DFS(peerNode, visitedNodes);
+            }
+        }
+    }
+
+    public void updateAllLinkWeights() {
+        System.out.println("he;;p");
+        for(int i = 0; i < masterList.size(); i++) {
+            RegisteredNode current = masterList.get(i);
+            for(RegisteredNode entry : current.peerNodes.keySet()) {
+                if(current.peerNodes.get(entry) == 0 && entry.peerNodes.get(current) == 0) {
+                    
+                    int weight = rand.nextInt(10) + 1;
+                    current.peerNodes.replace(entry, weight);
+                    //this would update the weight from A to be only we need to update B to A
+                    entry.peerNodes.replace(current, weight);
+                    //generate a connection message for both of them
+                    String messageOne = current.ip + ":" + current.portNum + " " + entry.ip + ":" + entry.portNum + "-" + weight;
+                    
+                    linkMessages.add(messageOne);    
+                }           
             }
         }
     }

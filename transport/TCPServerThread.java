@@ -18,7 +18,6 @@ public class TCPServerThread implements Runnable {
     //this will be spawned by both entities and will simply be the listener of connections (not sure how itll work like addding things lmao)
     
     ServerSocket serverSocket;
-    ArrayList<RegisteredNode> registeredNodes;
     //need a field for owner tpe
     private Object owner;
 
@@ -28,7 +27,6 @@ public class TCPServerThread implements Runnable {
 
     public TCPServerThread(ServerSocket serverSocket, Object owner) {
         this.serverSocket = serverSocket;
-        this.registeredNodes = registeredNodes;
         this.owner = owner;
 
     }
@@ -58,105 +56,22 @@ public class TCPServerThread implements Runnable {
                 //turn this to registered nodes
                 RegisteredNode peerNode = new RegisteredNode(socket, owner,socket.getInetAddress().getHostAddress(), socket.getPort());
                 peerNode.setUpandRun();
-                ((MessagingNode)owner).nodes.add(peerNode); //only one thread (this one will ever do this)
+                ((MessagingNode)owner).addConnection(peerNode); //only one thread (this one will ever do this)
             } catch (IOException ioe) {
                 System.out.println("Problem in creating a registered node");
                 System.out.println(ioe.getMessage());
             }
-           }
-
-           
-            //all commented code below this point was dumb and a bad implementation
-            //we are going to make this much simpler,
-            //no more need for registered node list
-            //this class will have ONE responsibility, to accept connects, and make the proper node type, thats it.
-            //the proper node types will handle themselves
-
-            
+           } 
         }
     }
-
-     
 
     private Socket acceptConnections() {
         Socket socket = null;
         try {
             socket = serverSocket.accept();
-            System.out.println("a connection has been accepted!");
         } catch(IOException ioe) {
             System.out.println(ioe.getMessage());
         }
         return socket;
     }
-
-    /*
-
-    
-    private void readRegistrationEvent(Socket socket) throws IOException {
-        //the "origin IP" for that check can be gotten from this socket
-        //i think?
-        DataInputStream din = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-        String socketIP = socket.getInetAddress().getHostAddress();
-
-        int length = din.readInt();
-        byte[] marshalledData = new byte[length];
-        din.readFully(marshalledData,0,length);
-        System.out.println(marshalledData);
-        //we dint need the type 
-        RegisterRequest request = new RegisterRequest();
-        //then get the bytes
-        request.getBytes(marshalledData);
-
-
-
-        
-
-        //examine the data
-        if(owner instanceof Registry) {
-            //check if it is a mismatch
-            if(!request.ipAddress.equals(socketIP)) {
-                sender = new TCPSender(socket);
-                String response = "ERROR: Invalid registration credentials";
-                generateReponse(response, false);
-                 
-            } else {
-                for(int i = 0; i < registeredNodes.size(); ++i) {
-                    if((registeredNodes.get(i).ipAddress.equals(request.ipAddress)) && registeredNodes.get(i).portNumber == request.portNumber) {
-                        sender = new TCPSender(socket);
-                        String response = "ERROR: Invalid registration credentials";
-                        generateReponse(response, false);
-                    }
-                }
-            }
-            
-            //in the instance of getting a messaging node registered with the server we have passed checks, call create and add
-            ((Registry)owner).createAndAddNode(socket, request);
-
-        } else if (owner instanceof MessagingNode){ //case of messaging node receiving connection from other messaging nodes
-            //make sure they get added to the correct list?\\
-            System.out.println("messenging guy detected");
-            String message = "you have connected with another messaging node";
-            sender = new TCPSender(socket);
-            generateReponse(message, true);
-            ((MessagingNode) owner).createAndAddNode(socket, request);
-        }
-        //call create and add 
-        accepted = true;  
-    }
-
-    private void generateReponse(String message, boolean success) throws IOException {
-        System.out.println("sending response message");
-        RegisterResponse registerResponse = null;
-        if(success) {
-            registerResponse = new RegisterResponse((byte)1, message);
-        } else {
-            registerResponse = new RegisterResponse((byte)0, message);
-        }
-
-        byte[] marshalledMessage = registerResponse.setBytes();
-        sender.sendData(marshalledMessage);
-
-    }
-
-    */
 }
