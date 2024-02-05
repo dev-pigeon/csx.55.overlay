@@ -83,6 +83,9 @@ public class Link_Weights implements Event {
             String message = new String(messageBytes);
             linkWeightMessages.add(message);
         }
+
+        bArrayInputStream.close();
+        din.close();
     }
 
 
@@ -110,9 +113,9 @@ public class Link_Weights implements Event {
         RegisteredNode nodeTwo = new RegisteredNode(null, nodeTwoIP, nodeTwoPort);
 
         //call messagingNode linkWeightProtocol
-        System.out.println("just received message, node One = " + nodeOneString);
-        System.out.println("node two = " + nodeTwoString);
-        System.out.println("weight " + weight);
+       System.out.println("just received message, node One = " + nodeOneString);
+     System.out.println("node two = " + nodeTwoString);
+       // System.out.println("weight " + weight);
         try {
             ((MessagingNode)owner).linkWeightProtocol(nodeOne, nodeTwo, weight);
         } catch (UnknownHostException e) {

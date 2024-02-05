@@ -48,17 +48,17 @@ public class TCPReceiverThread implements Runnable {
                 int type = readType(marshallCopy);
                
                 
-                
                 messageType msgType = Protocol.getMessageType(type);
 
                 
                 Event event = EventFactory.spawnEvent(msgType); 
-
+                
                
                 
                 //get the bytes and stuff, the event will handle the rest
                 
                 event.getBytes(marshalledData); 
+                
                 //call handle event based on the type that it is
                 event.handleEvent(owner, node); //diff events will call methods based on input of owner (change owner to a literal instance of registry or msg node)
                 
@@ -69,7 +69,8 @@ public class TCPReceiverThread implements Runnable {
                 System.out.println(ioe.getMessage());
                 break;
             }
-        }
+        } 
+        System.out.println("SOCKET WAS NULL?");
     }
 
     public static int readType(byte[] marshalledMessage) throws IOException {

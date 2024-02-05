@@ -37,6 +37,9 @@ public class EventFactory {
             case Link_Weights:
                 event = new Link_Weights();
                 break;
+            case PeerPortNumber:
+                event = new PeerPortNumber();
+                break;
             default:
                 break;
         }

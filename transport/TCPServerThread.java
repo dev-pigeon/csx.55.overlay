@@ -55,8 +55,9 @@ public class TCPServerThread implements Runnable {
                 //THAT WAS CONNECTED TO
                 //turn this to registered nodes
                 RegisteredNode peerNode = new RegisteredNode(socket, owner,socket.getInetAddress().getHostAddress(), socket.getPort());
+                System.out.println("my port number is " + peerNode.portNum);
                 peerNode.setUpandRun();
-                ((MessagingNode)owner).addConnection(peerNode); //only one thread (this one will ever do this)
+                ((MessagingNode)owner).addConnection(peerNode);
             } catch (IOException ioe) {
                 System.out.println("Problem in creating a registered node");
                 System.out.println(ioe.getMessage());

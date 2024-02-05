@@ -23,6 +23,7 @@ public class Protocol  {
     static final int Pull_Traffic_Summary = 7;
     static final int Traffic_Summary = 8;
     static final int Message = 9;
+    static final int PeerPortNumber = 11;
 
     
     public static enum messageType {
@@ -35,7 +36,8 @@ public class Protocol  {
         Task_Complete,
         Pull_Traffic_Summary,
         Traffic_Summary,
-        Message
+        Message,
+        PeerPortNumber
     }
 
    public static messageType getMessageType(int typeNum) {
@@ -58,6 +60,8 @@ public class Protocol  {
                 return messageType.Pull_Traffic_Summary;
             case Message:
                 return messageType.Message;
+            case PeerPortNumber:
+                return messageType.PeerPortNumber;
             default:
                 return messageType.Traffic_Summary;
         }
