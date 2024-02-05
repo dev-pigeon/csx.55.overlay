@@ -17,6 +17,7 @@ public class Link_Weights implements Event {
     
     ArrayList<String> linkWeightMessages;
     int type = 4;
+    int numLeftOffset = 1;
     
     public Link_Weights() {
         this(new ArrayList<>());
@@ -111,13 +112,10 @@ public class Link_Weights implements Event {
 
         RegisteredNode nodeOne = new RegisteredNode(null, nodeOneIP, nodeOnePort);
         RegisteredNode nodeTwo = new RegisteredNode(null, nodeTwoIP, nodeTwoPort);
-
-        //call messagingNode linkWeightProtocol
-       System.out.println("just received message, node One = " + nodeOneString);
-     System.out.println("node two = " + nodeTwoString);
-       // System.out.println("weight " + weight);
+        
         try {
-            ((MessagingNode)owner).linkWeightProtocol(nodeOne, nodeTwo, weight);
+            ((MessagingNode)owner).linkWeightProtocol(nodeOne, nodeTwo, weight, linkWeightMessages.size() - numLeftOffset);
+            numLeftOffset++;
         } catch (UnknownHostException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

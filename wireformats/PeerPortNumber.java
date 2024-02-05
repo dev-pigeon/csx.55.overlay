@@ -55,20 +55,16 @@ public class PeerPortNumber implements Event {
 
     @Override
     public void getBytes(byte[] marhalledData) throws IOException {
-        System.out.println(" I am in get bytes");
         ByteArrayInputStream bArrayInputStream = new ByteArrayInputStream(marhalledData);
         DataInputStream din = new DataInputStream(new BufferedInputStream(bArrayInputStream));
         type = din.readInt();
-        System.out.println("type = " + type);
         portNumber = din.readInt();
-        System.out.println("port " + portNumber);
         bArrayInputStream.close();
         din.close();
     }
 
     @Override
     public void handleEvent(Object owner, RegisteredNode node) {
-        System.out.println("I got your message, fake port number is " + this.portNumber);
         node.setPortNum(portNumber);
     }
     

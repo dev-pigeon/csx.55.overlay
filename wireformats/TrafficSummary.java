@@ -88,11 +88,8 @@ public class TrafficSummary implements Event {
     }
 
     @Override
-    public void handleEvent(Object owner,RegisteredNode node) {
-        
-        String summary = Integer.toString(numSent) + " " + Integer.toString(numReceived) + " " + Long.toString(sumSent) + " " + Long.toString(sumReceived);
-        
-        ((Registry)owner).storeTrafficSummary(summary);
+    public void handleEvent(Object owner,RegisteredNode node) {        
+        ((Registry)owner).storeTrafficSummary(numSent, numReceived, sumSent, sumReceived);
     }
 
 }

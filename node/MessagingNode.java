@@ -122,7 +122,6 @@ public class MessagingNode {
             TCPSender tempSender = new TCPSender(newPeer.socket);
                 PeerPortNumber port = new PeerPortNumber(serverPort);
                 byte[] message = port.setBytes();
-                System.out.println("sending fake message");
                 tempSender.sendData(message);
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -196,24 +195,20 @@ public class MessagingNode {
                     //get route is going to return a String path, so we can create our message in here with payload / path
                     //part of parsing the first node in the relay chain is returning the RegisteredNode in your mf peerNode list with that IP
                     //this is because the nodes in masterList are just graph representations and don't have sockets
-
                     
                     byte[] message = msg.setBytes();
                     RegisteredNode sink = getRandomNode();
-                    System.out.println("sink has an ip of " + sink.ip + " and a port number of " + sink.portNum);
                     TCPSender sender = new TCPSender(sink.socket);
                     sender.sendData(message);
                     self.messagesSent+=1;
                     self.messagesSentSum += payload;
-                //    System.out.println("I just sent " + payload + " making my total " + messagesSentSum);
                 } catch(IOException ioe) {
 
                 }
-
             }
         }
         try {
-            Thread.sleep(3000);
+            Thread.sleep(1500);
             //System.out.println("sending task complete");
             self.sendTaskComplete();
         } catch (InterruptedException | IOException e) {
@@ -236,8 +231,6 @@ public class MessagingNode {
         return firstNode;
     }
 
-    
-
     public RegisteredNode getRandomNode() {
         Random rand = new Random();
         int index = -1;
@@ -255,9 +248,8 @@ public class MessagingNode {
             }
         }
 
-        //return the entry in peer nodes that is selected node since we are just testing with case where n = k + 1
         for(RegisteredNode entry : peerNodes.keySet()) {
-            if(entry.ip.equals(selectedNode.ip) && entry.ip.equals(selectedNode.ip)) {
+            if(entry.ip.equals(selectedNode.ip) && entry.portNum == selectedNode.portNum) {
                 return entry;
             }
         }
@@ -319,7 +311,7 @@ public class MessagingNode {
        // System.out.println("my sum is " + messagesReceivedSum);
     }
 
-    public void linkWeightProtocol(RegisteredNode nodeOne, RegisteredNode nodeTwo, int weight) throws UnknownHostException {//IP and ports are good here
+    public void linkWeightProtocol(RegisteredNode nodeOne, RegisteredNode nodeTwo, int weight, int numLeft) throws UnknownHostException {//IP and ports are good here
         //checl for base case 
         if(masterList.size() == 0) {
             masterList.add(nodeOne);
@@ -328,8 +320,11 @@ public class MessagingNode {
 
         RegisteredNode realNodeOne = findNode(nodeOne);
         RegisteredNode realNodeTwo = findNode(nodeTwo);
-        System.out.println("coneection formed between " + realNodeOne.ip + ":" + realNodeOne.portNum + " and " + realNodeTwo.ip + ":" + realNodeTwo.portNum);
         overlayCreator.formConnection(realNodeOne, realNodeTwo, weight);
+        if(numLeft == 0) {
+            //i am gonna run mu djikstra's algorithm here so that everythign is pre cached
+            System.out.println("Link weights received and processed. Ready to send messages.");
+        }
         
     }
 
@@ -356,7 +351,6 @@ public class MessagingNode {
                 return realNode;
             }
         }
-
         //node was not in master lst, add it
         masterList.add(node);
         return node;

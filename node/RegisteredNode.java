@@ -44,11 +44,8 @@ public class RegisteredNode {
       } 
       
    }
-
-   //this is needed because when the Registry's R node gets the request we have to have their ServerSockets port num set 
-   //for when registry sends the Messaging list or whatever
+   
    public void setPortNum(int portNumber) {
-      System.out.println("my port num is now " + portNumber);
       this.portNum = portNumber;
    }
 

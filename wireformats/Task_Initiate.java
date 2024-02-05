@@ -69,7 +69,6 @@ public class Task_Initiate implements Event {
 
     @Override
     public void handleEvent(Object owner,RegisteredNode node) {
-            System.out.println("I am initiating task with " + rounds + " rounds");
             ((MessagingNode)owner).initiateTask(rounds);
     }
     

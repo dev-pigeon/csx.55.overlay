@@ -283,7 +283,6 @@ public class OverlayCreator {
     }
 
     public void updateAllLinkWeights() {
-        System.out.println("he;;p");
         for(int i = 0; i < masterList.size(); i++) {
             RegisteredNode current = masterList.get(i);
             for(RegisteredNode entry : current.peerNodes.keySet()) {
@@ -295,7 +294,6 @@ public class OverlayCreator {
                     entry.peerNodes.replace(current, weight);
                     //generate a connection message for both of them
                     String messageOne = current.ip + ":" + current.portNum + " " + entry.ip + ":" + entry.portNum + "-" + weight;
-                    
                     linkMessages.add(messageOne);    
                 }           
             }

@@ -27,6 +27,11 @@ public class Registry {
     private ConnectionMessageGenerator generator;
 
     private OverlayCreator overlayCreator;
+
+    long totalSumSent = 0;
+    long totalSumReceived = 0;
+    int totalNumSent = 0;
+    int totalNumReceived = 0;
     public static void main(String[] args) throws IOException, InterruptedException {
        
        Registry registry = new Registry();
@@ -119,7 +124,12 @@ public class Registry {
 
     public void listRegisteredNodes() {
         for(int i = 0; i < registeredNodes.size(); ++i) {
-            System.out.println(registeredNodes.get(i).ip + " on port " + registeredNodes.get(i).socket.getPort());
+            try {
+                System.out.println(InetAddress.getByName(registeredNodes.get(i).ip).getHostName() + " on port " + registeredNodes.get(i).portNum);
+            } catch (UnknownHostException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     } 
     
@@ -129,7 +139,6 @@ public class Registry {
         
         try {
             byte[] taskMessage = task.setBytes();
-            System.out.println("writing to " + registeredNodes.size() + " nodes");
             for(RegisteredNode node : registeredNodes) {
                 TCPSender sender = new TCPSender(node.socket);
                 sender.sendData(taskMessage);
@@ -181,7 +190,7 @@ public class Registry {
         potentialNode.setPortNum(registerPort);
         //add him and generate the response
         registeredNodes.add(potentialNode);
-        System.out.println("number of nodes in registy  = "  + registeredNodes.size());
+       // System.out.println("number of nodes in registy  = "  + registeredNodes.size());
         String message = "Registration request successful. The number of messaging nodes currently constituting the overlay is (" + Integer.toString(registeredNodes.size()) + ")";
         GenerateRegistrationResponse(potentialNode, (byte)1, message);
    }
@@ -225,16 +234,22 @@ public class Registry {
 
    }
 
-   public synchronized void storeTrafficSummary(String summary) {
+   public synchronized void storeTrafficSummary(int numSent, int numReceived, long sumSent, long sumReceived) {
 
     //System.out.println("receiving summary");
-    String nodeSummary = "Node " + Integer.toString(numSummaryReceived) + " " + summary;
+    totalNumSent += numSent;
+    totalNumReceived += numReceived;
+
+    totalSumSent += sumSent;
+    totalSumReceived += sumReceived;
+    String nodeSummary = "Node " + (Integer.toString(numSummaryReceived+1)) + " " + Integer.toString(numSent) + " " + Integer.toString(numReceived) + " " + Long.toString(sumSent) + " " + Long.toString(sumReceived);
     summaryList.add(nodeSummary);
     ++numSummaryReceived;
-    System.out.println("number of summaries = " + numSummaryReceived);
     if(numSummaryReceived == registeredNodes.size()) {
-      
+        String finalSummary = "Sum " + Integer.toString(totalNumSent) + " "  + Integer.toString(totalNumReceived) + " " + Long.toString(totalSumSent) + " " + Long.toString(totalSumReceived);
         printTrafficSummary();
+        System.out.println(finalSummary);
+        numSummaryReceived = 0;
     }
 
    }

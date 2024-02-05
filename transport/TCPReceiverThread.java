@@ -45,23 +45,16 @@ public class TCPReceiverThread implements Runnable {
                 din.readFully(marshalledData, 0, dataLength); //read the entire thing without being interupted
                 
                 byte[] marshallCopy = Arrays.copyOf(marshalledData, marshalledData.length);
-                int type = readType(marshallCopy);
-               
+                int type = readType(marshallCopy);               
                 
                 messageType msgType = Protocol.getMessageType(type);
-
-                
-                Event event = EventFactory.spawnEvent(msgType); 
-                
                
-                
-                //get the bytes and stuff, the event will handle the rest
-                
-                event.getBytes(marshalledData); 
-                
+                Event event = EventFactory.spawnEvent(msgType); 
+                //get the bytes and stuff, the event will handle the rest                
+                event.getBytes(marshalledData);                 
                 //call handle event based on the type that it is
                 event.handleEvent(owner, node); //diff events will call methods based on input of owner (change owner to a literal instance of registry or msg node)
-                
+               
             } catch(SocketException se) {
                 System.out.println(se.getMessage());
                 break;
