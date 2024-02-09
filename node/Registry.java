@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+import dijkstra.*;
 import util.*;
 import transport.*;
 import wireformats.*;
@@ -27,6 +28,8 @@ public class Registry {
     private ConnectionMessageGenerator generator;
 
     private OverlayCreator overlayCreator;
+
+    private Cache cache = new Cache();
 
     long totalSumSent = 0;
     long totalSumReceived = 0;
@@ -263,7 +266,10 @@ public class Registry {
    public void listLinkWeights() {
     for(int i = 0; i < linkMessages.size(); ++i) {
         System.out.println(linkMessages.get(i));
-    }
+    }  
 }
-
+    public void testDjikstra() {
+        Djikstra djikstra = new Djikstra(cache, registeredNodes);
+        djikstra.findAllRoutes(registeredNodes.get(1));
+    }
 }

@@ -1,5 +1,7 @@
 package dijkstra;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Stack;
@@ -67,13 +69,13 @@ public class Cache {
         return cachedRoute;
     }
 
-    public void displayCachedRoutes() {
+    public void displayCachedRoutes() throws UnknownHostException {
         StringBuilder sb = new StringBuilder();
         //loop through the caches cachedRoutes
         for(int i = 0; i < cachedRoutes.size(); ++i) {
             //each of these is a CachedObject that has an arraylist which is the actual path
             PathObject firstElem = cachedRoutes.get(i).cachedRouteObject.get(0);
-            String firstElemString = firstElem.from.ip + "-" + Integer.toString(firstElem.weight) + "-" + firstElem.to.ip;
+            String firstElemString = InetAddress.getByName(firstElem.from.ip).getHostName() + "-" + Integer.toString(firstElem.weight) + "-" + InetAddress.getByName(firstElem.to.ip).getHostName();
             sb.insert(0, firstElemString);
 
             for(int j = 1; j < cachedRoutes.get(i).cachedRouteObject.size(); ++j) {
@@ -85,9 +87,9 @@ public class Cache {
         }
     }
 
-    private String buildPathString(PathObject path) {
+    private String buildPathString(PathObject path) throws UnknownHostException {
         //this is for elem 1 and on
-        String pathString = "-" + Integer.toString(path.weight) + "-" + path.to.ip;
+        String pathString = "-" + Integer.toString(path.weight) + "-" + InetAddress.getByName(path.to.ip).getHostName();
         return pathString;
     }
 

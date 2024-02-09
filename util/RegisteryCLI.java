@@ -11,7 +11,6 @@ public class RegisteryCLI implements Runnable {
 
     //input handler will need a reference to the registries
     //list of registered nodes for responding to commands, input handler will also need a sender object
-    
     Scanner scan = new Scanner(System.in);
     
     Registry registry;
@@ -43,6 +42,8 @@ public class RegisteryCLI implements Runnable {
             registry.listLinkWeights();
         } else if(commmandEntered.equals("send-overlay-link-weights")) {
             registry.sendLinkWeights();
+        } else if(commmandEntered.equals("test-dijkstra")) {
+            registry.testDjikstra();
         }
     }
 

@@ -1,5 +1,6 @@
 package dijkstra;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -41,8 +42,8 @@ public class Djikstra {
      * other nodes in the overlay from starting point
      * in my actual implementation starting point will likely be something like string IP
      */
-    public void findAllRoutes(String startPointAddress, int port) {
-        RegisteredNode current = findStartPoint(startPointAddress /*  port*/);
+    public void findAllRoutes(RegisteredNode startNode) {
+        RegisteredNode current = findStartPoint(startNode);
         this.startNode = current;
 
         System.out.println("DEBUG: start node = " + current.ip);
@@ -97,84 +98,20 @@ public class Djikstra {
                     currentPath.add(currentPathObject);
                     current = smallestWeightObject.to;
                     visitNodeProtocol(current);
-                }
-                /* 
-                System.out.println("going back to start node");
-                current = reverse(current); //takes you back the start node
-                System.out.println("after reversing my curernt node is  " + current.ip + " and the total weight is " + totalWeight);
-                if(current.equals(smallestWeightObject.from)) {
-                    //make the move, and do visited protocol
-                    System.out.println("after reversing making connection without traveling");
-                    totalWeight += smallestWeightObject.localWeight;
-                    PathObject currentPathObject = new PathObject(current, smallestWeightObject.to, smallestWeightObject.localWeight);
-                    currentPath.add(currentPathObject);
-                    current = smallestWeightObject.to;
-                    visitNodeProtocol(current);
-
-                } else {
-                    System.out.println("traveling to from node and that is node = " + smallestWeightObject.from.ip);
-                    current = travelToFromNode(current, smallestWeightObject.from);
-                    System.out.println("current now equals " + current.ip);
-                    PathObject currentPathObject = new PathObject(current, smallestWeightObject.to, smallestWeightObject.localWeight);
-                    currentPath.add(currentPathObject);
-                    current = smallestWeightObject.to;
-                    System.out.println("current now equals " + current.ip);
-                    visitNodeProtocol(current);
-                }
-                */
+                }                
             }
                 
         }
 
 
         System.out.println("FINAL: priting cached routes");
-        cache.displayCachedRoutes();
-
-    }
-
-    private RegisteredNode reverse(RegisteredNode current) {
-        //take an entry from the stack
-        
-        while(true) {
-        if(currentPath.size() != 0) {
-            System.out.println("actively reversing from " + current.ip);
-            PathObject pathToGo = currentPath.pop();
-            System.out.println("I am supposed to reverse to " + pathToGo.from.ip);
-            totalWeight -= pathToGo.weight; //really its the local weight
-            current = pathToGo.from; 
-            if(totalWeight == 0) {
-                System.out.println("ahah");
-                break;
-            }
+        try {
+            cache.displayCachedRoutes();
+        } catch (UnknownHostException uke) {
+            System.out.println(uke.getMessage());
         }
     }
-        return current;
-
-    }
-
-    /* 
-    private RegisteredNode travelToFromNode(RegisteredNode current, RegisteredNode fromNode) {
-        String pathStr = cache.getRoute(fromNode.ip);
-        pathStr = pathStr.replace("-", " ");
-        String[] pathArr = pathStr.split(" ");
-       
-        System.out.println("path arr at  zero  " + pathArr[0]);
-        for(int i = 0; i < pathArr.length - 3; i += 2) {
-            //make path object with reg at i, weight at i + 1, and reg at i + 2
-            RegisteredNode from = findStartPoint(pathArr[i]);
-            System.out.println("CREATED A FROM NODE QITH IP = " + from.ip);
-            int weight = Integer.parseInt(pathArr[i + 1]);
-            RegisteredNode to = findStartPoint(pathArr[i + 2]);
-            System.out.println("CREATED A TO NODE QITH IP = " + to.ip);
-            PathObject pathObject = new PathObject(from, to, weight);
-            currentPath.add(pathObject);
-        }
-       
-        current = fromNode;
-        return current;
-    }
-    */
-
+    
    public int collectPathWeight(String str) { //dead function
     int sum = 0;
     str = str.replace("-", " ");
@@ -186,15 +123,10 @@ public class Djikstra {
     return sum;
    }
 
-    private RegisteredNode findStartPoint(String address /*int port*/) {
-        RegisteredNode startPoint = null;
-        for(int i = 0; i < masterList.size(); ++i) {
-            if(masterList.get(i).ip.equals(address) /*  && unvisitedNodes.get(i).portNum == port*/) {
-                startPoint = masterList.get(i);
-                break;
-            }
-        }
-        return startPoint;
+    private RegisteredNode findStartPoint(RegisteredNode startNode) {
+        //return masterList.g
+        int index = masterList.indexOf(startNode);
+        return masterList.get(index);
     }
 
     /*
