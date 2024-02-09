@@ -1,4 +1,4 @@
-package wireformats;
+package csx55.overlay.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -8,20 +8,22 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import node.MessagingNode;
-import node.RegisteredNode;
+import csx55.overlay.node.MessagingNode;
+import csx55.overlay.node.RegisteredNode;
 
 public class Message implements Event{
 
     int type = 9;
     int payload = 0;
+    String route;
 
     public Message() {
-        this(0);
+        this(0, null);
     }
 
-    public Message(int payload) {
+    public Message(int payload, String route) {
         this.payload = payload;
+        this.route = route;
     }
 
     @Override

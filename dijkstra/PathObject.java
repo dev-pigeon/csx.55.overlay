@@ -1,5 +1,7 @@
-package dijkstra;
-import node.*;
+package csx55.overlay.dijkstra;
+
+
+import csx55.overlay.node.*;
 public class PathObject {
     
     RegisteredNode from;
@@ -15,7 +17,6 @@ public class PathObject {
     }
 
     public void setLocalWeight(int weight) {
-        System.out.println("my local weight is " + weight);
         this.localWeight = weight;
     }
 }

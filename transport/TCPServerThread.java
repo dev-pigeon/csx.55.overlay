@@ -1,4 +1,4 @@
-package transport;
+package csx55.overlay.transport;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -7,11 +7,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-import javax.xml.crypto.Data;
 
-import node.RegisteredNode;
-import wireformats.*;
-import node.*;
+
+import csx55.overlay.node.RegisteredNode;
+import csx55.overlay.wireformats.*;
+import csx55.overlay.node.*;
 
 
 public class TCPServerThread implements Runnable {

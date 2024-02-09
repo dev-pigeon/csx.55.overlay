@@ -1,11 +1,11 @@
-package util;
+package csx55.overlay.util;
 
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import transport.*;
-import wireformats.*;
-import node.*;
+import csx55.overlay.transport.*;
+import csx55.overlay.wireformats.*;
+import csx55.overlay.node.*;
 public class InputHandler implements Runnable {
 
     //input handler will need a reference to the registries

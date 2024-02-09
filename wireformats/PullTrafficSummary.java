@@ -1,4 +1,4 @@
-package wireformats;
+package csx55.overlay.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -8,8 +8,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import node.MessagingNode;
-import node.RegisteredNode;
+import csx55.overlay.node.MessagingNode;
+import csx55.overlay.node.RegisteredNode;
 
 public class PullTrafficSummary implements Event {
     int type = 7;

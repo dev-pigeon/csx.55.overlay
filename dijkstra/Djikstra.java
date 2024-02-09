@@ -1,4 +1,4 @@
-package dijkstra;
+package csx55.overlay.dijkstra;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
-import node.*;
+import csx55.overlay.node.*;
 
 
 public class Djikstra {
@@ -44,9 +44,8 @@ public class Djikstra {
      */
     public void findAllRoutes(RegisteredNode startNode) {
         RegisteredNode current = findStartPoint(startNode);
+        System.out.println("my start node has a port number of " + current.portNum);
         this.startNode = current;
-
-        System.out.println("DEBUG: start node = " + current.ip);
         //create pool objects
         visitNodeProtocol(current);
         //in the while loop first thing is to find the shortest weight in the pool
@@ -61,7 +60,6 @@ public class Djikstra {
                 totalWeight += smallestWeightObject.localWeight;
                 //we need to add this to curent path
                 PathObject currentPathObject = new PathObject(current, smallestWeightObject.to, smallestWeightObject.localWeight);
-                System.out.println("path object that was seelcted has a total weight of " + currentPathObject.weight);
                 currentPath.add(currentPathObject);
                 current = smallestWeightObject.to;
                 visitNodeProtocol(current);
@@ -70,23 +68,19 @@ public class Djikstra {
                 //everyhting above this point is tested and good
                 //everything below is ass
             } else {
-                System.out.println("have to backtrack, clearing currentPath");
                 current = startNode;
                 totalWeight -= totalWeight;
-                System.out.println("I have reset myself to node " + current.ip + " and the total weight is " + totalWeight);
                 currentPath.clear();
                 if(current.equals(smallestWeightObject.from)) {
                     //neighbor of start node baby
                     totalWeight += smallestWeightObject.localWeight;
                 //we need to add this to curent path
                     PathObject currentPathObject = new PathObject(current, smallestWeightObject.to, smallestWeightObject.localWeight);
-                    System.out.println("path object that was seelcted has a total weight of " + currentPathObject.weight);
                     currentPath.add(currentPathObject);
                     current = smallestWeightObject.to;
                     visitNodeProtocol(current);
                 } else {
                     //we need to locate the from node
-                    System.out.println("trying to find cached route with target = " + smallestWeightObject.from.ip);
                     Cache.CacheObject path = cache.findCachedRoute(smallestWeightObject.from);
                     currentPath.addAll(path.cachedRouteObject);
                     totalWeight += cache.sumPathWeight(path);
@@ -94,7 +88,7 @@ public class Djikstra {
                     totalWeight += smallestWeightObject.localWeight;
 
                     PathObject currentPathObject = new PathObject(current, smallestWeightObject.to, smallestWeightObject.localWeight);
-                    System.out.println("path object that was seelcted has a total weight of " + currentPathObject.weight);
+                   
                     currentPath.add(currentPathObject);
                     current = smallestWeightObject.to;
                     visitNodeProtocol(current);
@@ -102,9 +96,6 @@ public class Djikstra {
             }
                 
         }
-
-
-        System.out.println("FINAL: priting cached routes");
         try {
             cache.displayCachedRoutes();
         } catch (UnknownHostException uke) {
@@ -116,12 +107,13 @@ public class Djikstra {
     int sum = 0;
     str = str.replace("-", " ");
     String[] path = str.split(" ");
-    System.out.println(Arrays.toString(path));
+   
     for(int i = 1; i < path.length - 1; i += 2) {
         sum += Integer.parseInt(path[i]);
     }
     return sum;
    }
+
 
     private RegisteredNode findStartPoint(RegisteredNode startNode) {
         //return masterList.g
@@ -137,14 +129,11 @@ public class Djikstra {
         if(!visitedNodes.contains(currentNode)) {
             spawnPoolObjects(currentNode);
             visitedNodes.add(currentNode);
-           // System.out.println(currentNode.ip + " added to visited list");
             unvisitedNodes.remove(currentNode);
             //create cached route - this empties the current path list
             if(currentPath.size() != 0) {
-                System.out.println("ADDING CACHED OBJECT WITH CURRENT PATH SIZE = " + currentPath.size());
                 cache.addCacheObject(currentPath);
                 //currentPath.clear();
-                System.out.println("NEW CURRENT PATH SIZE " + currentPath.size());
 
             }
            // createCachedRoute();
@@ -166,13 +155,11 @@ public class Djikstra {
                 //grab the weight of that edge
                 int edgeWeight = fromNode.peerNodes.get(entry);
                 int poolObjectWeight = totalWeight + edgeWeight; 
-                //System.out.println( "DEBUG: adding pool object " + entry.ip + " with weight " + poolObjectWeight +  " and to Node " + entry.ip + " and from node " + fromNode.ip); 
                 PathObject poolObject = new PathObject(fromNode, entry, poolObjectWeight);
                 poolObject.setLocalWeight(edgeWeight);
                 pool.add(poolObject);
             }
         }
-        //System.out.println("total weight = " + totalWeight);
     }
 
 
@@ -183,44 +170,15 @@ public class Djikstra {
                 minIndex = i;
             }
         }
-        //System.out.println("returning total weight = " + pool.get(minIndex).weight);
         return pool.remove(minIndex);
     }
 
-    /*
-     * this is going to pop off the contents of current path and form 
-     * A string out of them by appending the contents to the front of a string builder
-     * first pop off the top elem, as from-weight-to
-     * if A - 5 - B is pos 1, then B - 2 - C could be a possible option
-     * from elem 1 on only add the From - weight to avoid dupliucates
-     */
-
-     /* 
-    private void createCachedRoute() {
-        if(currentPath.size() > 0 ) {
-        StringBuilder sb = new StringBuilder();
-        PathObject firstElem = currentPath.get(0);
-        String firstElemString = firstElem.from.ip + "-" + Integer.toString(firstElem.weight) + "-" + firstElem.to.ip;
-        sb.insert(0, firstElemString);
-        for(int i = 1; i < currentPath.size(); ++i) {
-            String tempStr = buildPathString(currentPath.get(i));
-            sb.append(tempStr);
-        }
-
-        System.out.println("DEBUG: adding route " + sb.toString());
-        cache.addRoute(sb.toString());
-    }
-    }
-    */
 
     private String buildPathString(PathObject path) {
         //this is for elem 1 and on
         String pathString = "-" + Integer.toString(path.weight) + "-" + path.to.ip;
         return pathString;
     }
-
-
-
 
     private void removeAllPoolInstances(RegisteredNode target) {
         ArrayList<Integer> indecies = new ArrayList<>();
@@ -237,8 +195,6 @@ public class Djikstra {
             int indexToRemove = indecies.get(i);
             pool.remove(indexToRemove);
         }
-
-        //System.out.println("DEBUG: pritning pool size in removeallinstances");
         
     }    
 }

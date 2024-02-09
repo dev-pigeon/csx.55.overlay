@@ -1,8 +1,8 @@
-package util;
+package csx55.overlay.util;
 
 import java.io.IOException;
 import java.util.Scanner;
-import node.MessagingNode;
+import csx55.overlay.node.MessagingNode;
 
 public class MsgNodeCLI implements Runnable {
     Scanner scan = new Scanner(System.in);
@@ -35,6 +35,8 @@ public class MsgNodeCLI implements Runnable {
             msgNode.sendDeregisterRequest();
         } else if(message.equals("list-weights")) {
             msgNode.listWeights();
+        } else if(message.equals("test-djikstra")) {
+            msgNode.testDjikstra();
         }
     }
 

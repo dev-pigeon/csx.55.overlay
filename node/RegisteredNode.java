@@ -1,4 +1,4 @@
-package node;
+package csx55.overlay.node;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import transport.TCPReceiverThread;
+import csx55.overlay.transport.TCPReceiverThread;
 
 public class RegisteredNode {
     

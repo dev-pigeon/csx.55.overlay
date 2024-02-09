@@ -1,4 +1,4 @@
-package wireformats;
+package csx55.overlay.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -8,7 +8,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import node.RegisteredNode;
+import csx55.overlay.node.RegisteredNode;
 
 public class PeerPortNumber implements Event {
 

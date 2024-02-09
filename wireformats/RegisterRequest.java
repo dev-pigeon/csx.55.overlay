@@ -1,4 +1,4 @@
-package wireformats;
+package csx55.overlay.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -9,7 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import node.*;
+import csx55.overlay.node.*;
 
 /* note
  * this will only go to the REGISTRY

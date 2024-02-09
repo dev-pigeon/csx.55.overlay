@@ -1,4 +1,4 @@
-package node;
+package csx55.overlay.node;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -7,10 +7,10 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-import dijkstra.*;
-import util.*;
-import transport.*;
-import wireformats.*;
+import csx55.overlay.dijkstra.*;
+import csx55.overlay.util.*;
+import csx55.overlay.transport.*;
+import csx55.overlay.wireformats.*;
 
 
 public class Registry {

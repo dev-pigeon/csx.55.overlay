@@ -1,4 +1,4 @@
-package wireformats;
+package csx55.overlay.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-import node.*;
+import csx55.overlay.node.*;
 
 
 public class Link_Weights implements Event {

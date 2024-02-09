@@ -1,4 +1,4 @@
-package wireformats;
+package csx55.overlay.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -26,44 +26,32 @@ public class Protocol  {
     static final int PeerPortNumber = 11;
 
     
-    public static enum messageType {
-        Register_Request,
-        Register_Response,
-        Deregister_Request,
-        Messaging_Nodes_List,
-        Link_Weights,
-        Task_Initiate,
-        Task_Complete,
-        Pull_Traffic_Summary,
-        Traffic_Summary,
-        Message,
-        PeerPortNumber
-    }
+    
 
-   public static messageType getMessageType(int typeNum) {
+   public static int getMessageType(int typeNum) {
         switch (typeNum) {
             case Register_Request:
-                return messageType.Register_Request;
+                return Register_Request;
             case Register_Response:
-                return messageType.Register_Response;
+                return Register_Response;
             case Deregister_Request:
-                return messageType.Deregister_Request;
+                return Deregister_Request;
             case Messaging_Nodes_List:
-                return messageType.Messaging_Nodes_List;
+                return Messaging_Nodes_List;
             case Link_Weights:
-                return messageType.Link_Weights;
+                return Link_Weights;
             case Task_Initiate:
-                return messageType.Task_Initiate;
+                return Task_Initiate;
             case Task_Complete:
-                return messageType.Task_Complete;
+                return Task_Complete;
             case Pull_Traffic_Summary:
-                return messageType.Pull_Traffic_Summary;
+                return Pull_Traffic_Summary;
             case Message:
-                return messageType.Message;
+                return Message;
             case PeerPortNumber:
-                return messageType.PeerPortNumber;
+                return PeerPortNumber;
             default:
-                return messageType.Traffic_Summary;
+                return Traffic_Summary;
         }
     }
 }

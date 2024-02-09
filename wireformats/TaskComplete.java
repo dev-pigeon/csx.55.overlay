@@ -1,4 +1,4 @@
-package wireformats;
+package csx55.overlay.wireformats;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -8,8 +8,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import node.RegisteredNode;
-import node.Registry;
+import csx55.overlay.node.RegisteredNode;
+import csx55.overlay.node.Registry;
 
 public class TaskComplete implements Event{
     int type = 6;

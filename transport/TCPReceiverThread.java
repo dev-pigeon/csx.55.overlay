@@ -1,4 +1,4 @@
-package transport;
+package csx55.overlay.transport;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -11,11 +11,10 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import wireformats.*;
+import csx55.overlay.wireformats.*;
 
-import wireformats.Protocol.messageType;
-
-import node.*;
+//import csx55.overlay.wireformats.Protocol.messageType;
+import csx55.overlay.node.*;
 
 public class TCPReceiverThread implements Runnable {
 
@@ -47,7 +46,7 @@ public class TCPReceiverThread implements Runnable {
                 byte[] marshallCopy = Arrays.copyOf(marshalledData, marshalledData.length);
                 int type = readType(marshallCopy);               
                 
-                messageType msgType = Protocol.getMessageType(type);
+                int msgType = Protocol.getMessageType(type);
                
                 Event event = EventFactory.spawnEvent(msgType); 
                 //get the bytes and stuff, the event will handle the rest                

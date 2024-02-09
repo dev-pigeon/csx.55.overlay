@@ -1,4 +1,4 @@
-package node;
+package csx55.overlay.node;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -9,24 +9,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import transport.TCPSender;
-import transport.TCPServerThread;
-import util.InputHandler;
-import util.MsgNodeCLI;
-import util.OverlayCreator;
-import wireformats.*;
-
-/* TODO - now DONE
- * declare fields for network connection
- * find our port number (use while loop or something -> need try catch)
- * once port number has been found, bind the server socket to that specific port!
- * after that, set our InetAddress -> this will be needed to register
- */
-
-/* TODO - future 
- * write the request registry method
- * for this I will need to write the TCPsender and TCPreceiver in the transport folder
-*/
+import csx55.overlay.dijkstra.*;
+import csx55.overlay.dijkstra.Cache.CacheObject;
+import csx55.overlay.transport.TCPSender;
+import csx55.overlay.transport.TCPServerThread;
+import csx55.overlay.util.InputHandler;
+import csx55.overlay.util.MsgNodeCLI;
+import csx55.overlay.util.OverlayCreator;
+import csx55.overlay.wireformats.*;
 
 public class MessagingNode {
     //fields for socket programming
@@ -54,11 +44,15 @@ public class MessagingNode {
 
      static MessagingNode self;
 
-     public ArrayList<RegisteredNode> masterList = new ArrayList<>();
+    public ArrayList<RegisteredNode> masterList = new ArrayList<>();
 
-     ArrayList<String> linkMessages = new ArrayList<>();
+    ArrayList<String> linkMessages = new ArrayList<>();
 
      OverlayCreator overlayCreator = new OverlayCreator(masterList, linkMessages, 0);
+
+     Cache routeCache = new Cache();
+
+     Djikstra djikstra;
 
 
 
@@ -183,22 +177,37 @@ public class MessagingNode {
 
     public void initiateTask(int rounds) {
         //im going to assume that every round is five messages
-        
+        //calculate all the paths
+        djikstra = new Djikstra(routeCache, masterList); //now cache has all of my routes
+        RegisteredNode start = findYourselfInOverlay();
+        djikstra.findAllRoutes(start);
        Random rand = new Random();
         for(int i = 0; i < rounds; ++i) {
             for(int j = 0; j < 5; ++j) {
                 int payload = rand.nextInt();
-                Message msg = new Message(payload);
-                try {
-                    //* note this works if n = k + 1. final step of this is to make this call djikstras with index, and that will return the path to sink  */
-                    //which you can extract IP of first relay node, and use that with sender
-                    //get route is going to return a String path, so we can create our message in here with payload / path
-                    //part of parsing the first node in the relay chain is returning the RegisteredNode in your mf peerNode list with that IP
-                    //this is because the nodes in masterList are just graph representations and don't have sockets
+                try {  
                     
+                    RegisteredNode sink = getRandomNode(); //gets from the masterlist which is what the cache uses
+                    System.out.println("DEBUG: sink that was found is = " + sink.ip + ":" + sink.portNum);
+                    CacheObject route = routeCache.findForMessaging(sink);
+                    System.out.println("just got this route " + route);
+                    String routeString = routeCache.convertRouteToString(route);
+                    System.out.println("route string = " + routeString);
+                    routeString = routeString.replace("-", " ");
+                    System.out.println("route string after replacing " + routeString);
+                    String[] routeArr = routeString.split(" ");
+                    //index 0 is you, index 1 is the weight, index 2 is what you want
+                    for(int x = 0; x < routeArr.length; ++x) {
+                        System.out.print(routeArr[x] + " ");
+                    }
+                    System.out.println();
+
+                    RegisteredNode neighborToSend = findNodeToSendTo(routeArr[2]);
+
+                    String routeToSend = routeArrToString(2, routeArr);
+                    Message msg = new Message(payload, routeToSend);
                     byte[] message = msg.setBytes();
-                    RegisteredNode sink = getRandomNode();
-                    TCPSender sender = new TCPSender(sink.socket);
+                    TCPSender sender = new TCPSender(neighborToSend.socket);
                     sender.sendData(message);
                     self.messagesSent+=1;
                     self.messagesSentSum += payload;
@@ -355,4 +364,55 @@ public class MessagingNode {
         masterList.add(node);
         return node;
     }
+
+    public void testDjikstra() {
+        Djikstra djikstra = new Djikstra(routeCache, masterList);
+        RegisteredNode start = findYourselfInOverlay();
+        djikstra.findAllRoutes(start);
+    }
+
+    private RegisteredNode findYourselfInOverlay() {
+        RegisteredNode yourself = null;
+        for(RegisteredNode node : masterList) {
+            try {
+                if(node.ip.equals(InetAddress.getLocalHost().getHostAddress()) && node.portNum == serverPort) {
+                    yourself = node;
+                    break;
+                }
+            } catch (UnknownHostException e) {
+                // TODO Auto-generated catch block
+                System.out.println(e.getMessage());
+            }
+        }
+        return yourself;
+    }
+
+    private RegisteredNode findNodeToSendTo(String ipPort) throws UnknownHostException {
+        System.out.println("IP PORT = " + ipPort);
+        String IP = InetAddress.getByName(parseIPAddress(ipPort)).getHostAddress();
+        System.out.println("IP AFTER PASRSING " + IP);
+        int port = parsePortNumber(ipPort);
+        System.out.println("PORT AFTER PARSING " + port);
+        RegisteredNode neighborToSend = null;
+        for(RegisteredNode entry : peerNodes.keySet()) {
+            if(entry.ip.equals(IP) && entry.portNum == port) {
+                System.out.println("FOUND");
+                neighborToSend = entry;
+                break;
+            }
+        }
+        return neighborToSend;
+    }
+
+    private String routeArrToString(int offset, String[] routeArr) {
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = offset; i < routeArr.length; ++i) {
+            sb.append(routeArr[i]);
+        }
+        return sb.toString();
+    }
+
+    
+
 }
