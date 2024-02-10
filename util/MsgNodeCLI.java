@@ -40,6 +40,7 @@ public class MsgNodeCLI implements Runnable {
         }
     }
 
-
-
+    public void toggleDone() {
+        this.done = true;
+    }
 }

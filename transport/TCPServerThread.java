@@ -25,6 +25,8 @@ public class TCPServerThread implements Runnable {
 
     boolean accepted = false;
 
+    volatile boolean done = false;
+
     public TCPServerThread(ServerSocket serverSocket, Object owner) {
         this.serverSocket = serverSocket;
         this.owner = owner;
@@ -33,7 +35,7 @@ public class TCPServerThread implements Runnable {
 
     @Override
     public void run() {
-        while(true) {
+        while(!done) {
            Socket socket = acceptConnections();
 
            if(owner instanceof Registry) {
@@ -63,6 +65,8 @@ public class TCPServerThread implements Runnable {
             }
            } 
         }
+
+        System.out.println("I have been shut down!");
     }
 
     private Socket acceptConnections() {
@@ -73,5 +77,9 @@ public class TCPServerThread implements Runnable {
             System.out.println(ioe.getMessage());
         }
         return socket;
+    }
+
+    public void toggleDone() {
+        this.done = true;
     }
 }

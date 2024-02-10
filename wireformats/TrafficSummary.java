@@ -17,16 +17,16 @@ public class TrafficSummary implements Event {
     long sumSent;
     int numReceived;
     long sumReceived;
-    //int numRelayed;
-    //long sumRelayed;
+    int numRelayed;
 
     public TrafficSummary() {
-        this(0,0,0,0);
+        this(0,0,0,0,0);
     }
 
-    public TrafficSummary(int numSent, int numReceived, /*int numRelayed,*/ long sumSent, long sumReceived /*, long sumRelayed*/ ) {
+    public TrafficSummary(int numSent, int numReceived, int numRelayed, long sumSent, long sumReceived) {
         this.numSent = numSent;
         this.numReceived = numReceived;
+        this.numRelayed = numRelayed;
         this.sumSent = sumSent;
         this.sumReceived = sumReceived;
     }
@@ -54,10 +54,10 @@ public class TrafficSummary implements Event {
 
         dout.writeInt(numSent);
         dout.writeInt(numReceived);
-        //dout.writeInt(numRelayed);
+        dout.writeInt(numRelayed);
         dout.writeLong(sumSent);
         dout.writeLong(sumReceived);
-        //dout.writeLong(sumRelayed);
+    
         dout.flush();
 
         marshalledData = baOutputStream.toByteArray();
@@ -77,11 +77,11 @@ public class TrafficSummary implements Event {
 
         numSent = din.readInt();
         numReceived = din.readInt();
-        //numRelayed = din.readInt();
+        numRelayed = din.readInt();
+        System.out.println("my num relayed = " + numRelayed);
 
         sumSent = din.readLong();
         sumReceived = din.readLong();
-        //dout.sumRelayed = din.readLong();
 
         bArrayInputStream.close();
         din.close();
@@ -89,7 +89,7 @@ public class TrafficSummary implements Event {
 
     @Override
     public void handleEvent(Object owner,RegisteredNode node) {        
-        ((Registry)owner).storeTrafficSummary(numSent, numReceived, sumSent, sumReceived);
+        ((Registry)owner).storeTrafficSummary(numSent, numReceived, numRelayed, sumSent, sumReceived);
     }
 
 }

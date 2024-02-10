@@ -209,8 +209,9 @@ public class Registry {
         }
 
         //only send messages for failure, just unadd the node now
+        //shut em down boys
+        node.stopReceiver();
         registeredNodes.remove(node);
-    
    }
 
    public synchronized void checkTaskComplete() {
@@ -237,7 +238,7 @@ public class Registry {
 
    }
 
-   public synchronized void storeTrafficSummary(int numSent, int numReceived, long sumSent, long sumReceived) {
+   public synchronized void storeTrafficSummary(int numSent, int numReceived, int numRelayed, long sumSent, long sumReceived) {
 
     //System.out.println("receiving summary");
     totalNumSent += numSent;
@@ -245,7 +246,7 @@ public class Registry {
 
     totalSumSent += sumSent;
     totalSumReceived += sumReceived;
-    String nodeSummary = "Node " + (Integer.toString(numSummaryReceived+1)) + " " + Integer.toString(numSent) + " " + Integer.toString(numReceived) + " " + Long.toString(sumSent) + " " + Long.toString(sumReceived);
+    String nodeSummary = "Node " + (Integer.toString(numSummaryReceived+1)) + " " + Integer.toString(numSent) + " " + Integer.toString(numReceived) + " " + Long.toString(sumSent) + " " + Long.toString(sumReceived) + " " + Integer.toString(numRelayed);
     summaryList.add(nodeSummary);
     ++numSummaryReceived;
     if(numSummaryReceived == registeredNodes.size()) {

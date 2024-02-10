@@ -23,6 +23,8 @@ public class TCPReceiverThread implements Runnable {
    
     private Object owner;
     private RegisteredNode node;
+
+    volatile boolean done = false;
     //it will eventually change to the object for dikjstra
 
 
@@ -36,7 +38,7 @@ public class TCPReceiverThread implements Runnable {
     @Override
     public void run() {
         int dataLength;
-        while(socket!= null) {
+        while(!done || socket != null) {
             try {
                 //read the length so we know how big the array is
                 dataLength = din.readInt();
@@ -62,7 +64,12 @@ public class TCPReceiverThread implements Runnable {
                 break;
             }
         } 
-        System.out.println("SOCKET WAS NULL?");
+
+        try {
+            socket.close();
+        } catch(IOException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public static int readType(byte[] marshalledMessage) throws IOException {
@@ -74,6 +81,10 @@ public class TCPReceiverThread implements Runnable {
 
         int type = din.readInt();
         return type;
+    }
+
+    public void toggleDone() {
+        this.done = true;
     }
     
 }
