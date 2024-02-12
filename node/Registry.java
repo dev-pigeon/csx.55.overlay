@@ -25,6 +25,7 @@ public class Registry {
     public  ArrayList<RegisteredNode> registeredNodes = new ArrayList<>();
     public ArrayList<String> linkMessages = new ArrayList<String>();
 
+
     private ConnectionMessageGenerator generator;
 
     private OverlayCreator overlayCreator;
@@ -201,17 +202,32 @@ public class Registry {
    public synchronized void checkDeregisterRequest(String ip, int port, RegisteredNode node) {
         if(!registeredNodes.contains(node)) {
             String message = "ERROR: Deregistration Request failed. Node was not in registry.";
-            GenerateRegistrationResponse(node, (byte)0, message);
+            generateDeregisterResponse(node, message, 0);
         } else if(!ip.equals(node.socket.getInetAddress().getHostAddress())) {
             System.out.println("REQUEST IP = " + ip + " and node socket IP = " + node.socket.getInetAddress().getHostAddress());
-            String message = "Error: Deregistration Request failed. IP of request and sock differ";
-            GenerateRegistrationResponse(node, (byte)0, message);
+            String message = "Error: Deregistration Request failed. IP of request and socket differ";
+            generateDeregisterResponse(node, message, 0);
+        } else {
+            //only send messages for failure, just unadd the node now
+            //shut em down boys
+            generateDeregisterResponse(node, "Success", 1);
+            System.out.println("beginning shutdown");
+            node.stopReceiver();
+            registeredNodes.remove(node);
         }
 
-        //only send messages for failure, just unadd the node now
-        //shut em down boys
-        node.stopReceiver();
-        registeredNodes.remove(node);
+        
+   }
+
+   private void generateDeregisterResponse(RegisteredNode node, String message, int status) {
+    DeregisterRequest response = new DeregisterRequest(message, status);
+     try{
+        TCPSender sender = new TCPSender(node.socket);
+        byte[] marshalledData = response.setBytes();
+        sender.sendData(marshalledData);
+     } catch(IOException ioe) {
+        System.out.println(ioe.getMessage());
+     }
    }
 
    public synchronized void checkTaskComplete() {
@@ -272,5 +288,10 @@ public class Registry {
     public void testDjikstra() {
         Djikstra djikstra = new Djikstra(cache, registeredNodes);
         djikstra.findAllRoutes(registeredNodes.get(1));
+    }
+
+    public void removeFailedNode(RegisteredNode failedNode) {
+        System.out.println("removing the failed node");
+        registeredNodes.remove(failedNode);
     }
 }

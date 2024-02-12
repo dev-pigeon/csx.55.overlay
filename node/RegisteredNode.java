@@ -16,6 +16,7 @@ public class RegisteredNode {
    public int portNum;
 
    TCPReceiverThread receiver;
+   Thread receiverThread;
    Object owner;
 
    public HashMap<RegisteredNode,Integer> peerNodes = new HashMap<>();
@@ -41,7 +42,7 @@ public class RegisteredNode {
       //create the receiver thread
       if(socket!=null) {
          receiver = new TCPReceiverThread(socket, owner, this);
-         Thread receiverThread = new Thread(receiver);
+         receiverThread = new Thread(receiver);
          receiverThread.start();
       } 
       
@@ -56,6 +57,6 @@ public class RegisteredNode {
    }
 
    public void stopReceiver() {
-      receiver.toggleDone();
+      receiverThread.interrupt();
    }
 }

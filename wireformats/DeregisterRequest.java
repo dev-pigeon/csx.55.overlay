@@ -8,6 +8,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import csx55.overlay.node.MessagingNode;
 import csx55.overlay.node.RegisteredNode;
 import csx55.overlay.node.Registry;
 
@@ -79,6 +80,12 @@ public class DeregisterRequest implements Event {
        
        if(owner instanceof Registry) {
          ((Registry)owner).checkDeregisterRequest(ipAddress, port, node);
+       } else if(owner instanceof MessagingNode) {
+            if(port == 0) {
+                System.out.println(ipAddress);
+            } else {
+                ((MessagingNode)owner).shutDown();
+            }
        }
     }
 

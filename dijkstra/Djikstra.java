@@ -95,16 +95,12 @@ public class Djikstra {
             }
                 
         }
-        try {
-            cache.displayCachedRoutes();
-        } catch (UnknownHostException uke) {
-            System.out.println(uke.getMessage());
-        }
+       
     }
     
    public int collectPathWeight(String str) { //dead function
     int sum = 0;
-    str = str.replace("-", " ");
+    str = str.replace("~", " ");
     String[] path = str.split(" ");
    
     for(int i = 1; i < path.length - 1; i += 2) {
@@ -170,13 +166,6 @@ public class Djikstra {
             }
         }
         return pool.remove(minIndex);
-    }
-
-
-    private String buildPathString(PathObject path) {
-        //this is for elem 1 and on
-        String pathString = "-" + Integer.toString(path.weight) + "-" + path.to.ip;
-        return pathString;
     }
 
     private void removeAllPoolInstances(RegisteredNode target) {

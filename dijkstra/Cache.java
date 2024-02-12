@@ -55,7 +55,7 @@ public class Cache {
     public String convertRouteToString(CacheObject route) throws UnknownHostException {
         StringBuilder sb = new StringBuilder();
         PathObject firstElem = route.cachedRouteObject.get(0);
-        String firstElemString = InetAddress.getByName(firstElem.from.ip).getHostName() + ":" + Integer.toString(firstElem.from.portNum) + "-" + Integer.toString(firstElem.weight) + "-" + InetAddress.getByName(firstElem.to.ip).getHostName() + ":" + Integer.toString(firstElem.to.portNum);
+        String firstElemString = InetAddress.getByName(firstElem.from.ip).getHostName() + ":" + Integer.toString(firstElem.from.portNum) + "~" + Integer.toString(firstElem.weight) + "~" + InetAddress.getByName(firstElem.to.ip).getHostName() + ":" + Integer.toString(firstElem.to.portNum);
         sb.insert(0, firstElemString);
         for(int i = 1; i < route.cachedRouteObject.size(); ++i) {
             String tempStr = buildPathString(route.cachedRouteObject.get(i));
@@ -70,7 +70,7 @@ public class Cache {
         for(int i = 0; i < cachedRoutes.size(); ++i) {
             //each of these is a CachedObject that has an arraylist which is the actual path
             PathObject firstElem = cachedRoutes.get(i).cachedRouteObject.get(0);
-            String firstElemString = InetAddress.getByName(firstElem.from.ip).getHostName() + ":" + Integer.toString(firstElem.from.portNum) + "-" + Integer.toString(firstElem.weight) + "-" + InetAddress.getByName(firstElem.to.ip).getHostName() + ":" + Integer.toString(firstElem.to.portNum);
+            String firstElemString = InetAddress.getByName(firstElem.from.ip).getHostName() + ":" + Integer.toString(firstElem.from.portNum) + "~" + Integer.toString(firstElem.weight) + "~" + InetAddress.getByName(firstElem.to.ip).getHostName() + ":" + Integer.toString(firstElem.to.portNum);
             sb.insert(0, firstElemString);
 
             for(int j = 1; j < cachedRoutes.get(i).cachedRouteObject.size(); ++j) {
@@ -84,7 +84,7 @@ public class Cache {
 
     private String buildPathString(PathObject path) throws UnknownHostException {
         //this is for elem 1 and on
-        String pathString = "-" + Integer.toString(path.weight) + "-" + InetAddress.getByName(path.to.ip).getHostName() +  ":" + Integer.toString(path.to.portNum);
+        String pathString = "~" + Integer.toString(path.weight) + "~" + InetAddress.getByName(path.to.ip).getHostName() +  ":" + Integer.toString(path.to.portNum);
         return pathString;
     }
 

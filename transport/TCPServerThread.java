@@ -66,7 +66,7 @@ public class TCPServerThread implements Runnable {
            } 
         }
 
-        System.out.println("I have been shut down!");
+        System.out.println("DEBUG server was shut off");
     }
 
     private Socket acceptConnections() {

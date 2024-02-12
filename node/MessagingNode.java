@@ -31,6 +31,7 @@ public class MessagingNode {
     public long messagesReceivedSum = 0;
 
     TCPServerThread server;
+    Thread serverThread;
 
     int messagesRelayed = 0;    
 
@@ -57,8 +58,7 @@ public class MessagingNode {
      Djikstra djikstra;
 
      MsgNodeCLI cli;
-
-
+     Thread cliThread;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         self = new MessagingNode();
@@ -84,12 +84,12 @@ public class MessagingNode {
         
         //System.out.println("Messaging node creting server thread listing on IP " + serverSocket.getInetAddress().getLocalHost().getHostAddress() + " and port " + serverSocket.getLocalPort());
         server = new TCPServerThread(serverSocket, this);
-        Thread serverThread = new Thread(server);
+        serverThread = new Thread(server);
         serverThread.start();
 
         cli = new MsgNodeCLI(self);
-         Thread cliThread = new Thread(cli);
-         cliThread.start();
+        cliThread = new Thread(cli);
+        cliThread.start();
 
         //messagingnodes need serverthreads too (to listen to for connections between other messagingNodes)
     }
@@ -196,8 +196,8 @@ public class MessagingNode {
                     CacheObject route = routeCache.findForMessaging(sink);
                    // System.out.println("just got this route " + route);
                     String routeString = routeCache.convertRouteToString(route);
-                   // System.out.println("route string = " + routeString);
-                    routeString = routeString.replace("-", " ");
+                    System.out.println("route string = " + routeString);
+                    routeString = routeString.replace("~", " ");
                    
                     String[] routeArr = routeString.split(" ");
                     //index 0 is you, index 1 is the weight, index 2 is what you want
@@ -273,14 +273,13 @@ public class MessagingNode {
         DeregisterRequest request = new DeregisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] marshalledRequest = request.setBytes();
         sender.sendData(marshalledRequest);
-        try {
-            Thread.sleep(2000);
-            server.toggleDone();
-            cli.toggleDone();
-            System.exit(0);
-        } catch(InterruptedException e) {
-            System.out.println(e.getMessage());
-        }
+       
+           
+            //server.toggleDone(); //might not work, might force interuptions
+            //cli.toggleDone();
+            //cliThread.interrupt();
+            //System.exit(0);
+        
     }
 
     public synchronized void sendTrafficSummary() {
@@ -371,6 +370,7 @@ public class MessagingNode {
     }
 
     private RegisteredNode findNodeToSendTo(String ipPort) throws UnknownHostException {
+        System.out.println("IP PORT = " + ipPort);
         String IP = InetAddress.getByName(parseIPAddress(ipPort)).getHostAddress();
         int port = parsePortNumber(ipPort);
         RegisteredNode neighborToSend = null;
@@ -401,8 +401,6 @@ public class MessagingNode {
             messagesReceivedSum+=payload;
             //you are the sink
         } else {
-            //split into an array
-           
             //the node we need to send to is at index 0 in our array
             try {
            // System.out.println("FINDING ROUTING NODE WITH " + routeArr[2]);
@@ -424,4 +422,29 @@ public class MessagingNode {
 
     }
 
+    public void removeFailedNode(RegisteredNode failedNode) {
+        System.out.println("removing failed node");
+        masterList.remove(failedNode);
+        try {
+            RegisteredNode neighborCheck = findNodeToSendTo(failedNode.ip + ":" + failedNode.portNum);
+            if(neighborCheck != null) {
+                peerNodes.remove(neighborCheck);
+            }
+        } catch(IOException ioe) {
+            System.out.println(ioe.getMessage());
+        }
+
+        if(failedNode.equals(registryConnectionNode)) {
+            System.out.println("Registry has unexpectedly broke connection... Shutting down.");
+            shutDown();
+        }
+    }
+    
+    public void shutDown() {
+        serverThread.interrupt();
+        cliThread.interrupt();
+        registryConnectionNode.stopReceiver();
+        System.out.println("Shut down complete.");
+        System.exit(0);
+    }
 }

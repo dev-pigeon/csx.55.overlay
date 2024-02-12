@@ -26,6 +26,8 @@ public class MsgNodeCLI implements Runnable {
         }
        }
 
+       System.out.println("DEBUG: client cli shut down");
+
     }
 
     private void handleCommand(String message) throws IOException {
