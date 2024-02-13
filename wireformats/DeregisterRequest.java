@@ -82,9 +82,9 @@ public class DeregisterRequest implements Event {
          ((Registry)owner).checkDeregisterRequest(ipAddress, port, node);
        } else if(owner instanceof MessagingNode) {
             if(port == 0) {
-                System.out.println(ipAddress);
+               // System.out.println(ipAddress);
             } else {
-                ((MessagingNode)owner).shutDown();
+                //
             }
        }
     }

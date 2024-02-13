@@ -25,7 +25,6 @@ public class TCPReceiverThread implements Runnable {
     private RegisteredNode node;
 
     volatile boolean done = false;
-    
     //it will eventually change to the object for dikjstra
 
 
@@ -39,7 +38,7 @@ public class TCPReceiverThread implements Runnable {
     @Override
     public void run() {
         int dataLength;
-        while(true) {
+        while(!done || socket != null) {
             try {
                 //read the length so we know how big the array is
                 dataLength = din.readInt();
@@ -61,17 +60,15 @@ public class TCPReceiverThread implements Runnable {
                 System.out.println(se.getMessage());
                 break;
             } catch(IOException ioe) {
-                if(owner instanceof Registry) {
-                    //((Registry)owner).removeFailedNode(node);
-                } else {
-                    //((MessagingNode)owner).removeFailedNode(node);
-                }
+                System.out.println(ioe.getMessage());
                 break;
             }
         } 
 
-        if(socket != null) {
-            closeSocket();
+        try {
+            socket.close();
+        } catch(IOException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -88,13 +85,6 @@ public class TCPReceiverThread implements Runnable {
 
     public void toggleDone() {
         this.done = true;
-    }  
-    
-    private void closeSocket() {
-        try {
-            socket.close();
-        } catch(IOException ioe){
-            System.out.println("Unable to close socket");
-        }
     }
+    
 }

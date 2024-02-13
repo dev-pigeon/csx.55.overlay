@@ -13,6 +13,7 @@ import csx55.overlay.dijkstra.*;
 import csx55.overlay.dijkstra.Cache.CacheObject;
 import csx55.overlay.transport.TCPSender;
 import csx55.overlay.transport.TCPServerThread;
+import csx55.overlay.util.InputHandler;
 import csx55.overlay.util.MsgNodeCLI;
 import csx55.overlay.util.OverlayCreator;
 import csx55.overlay.wireformats.*;
@@ -30,7 +31,6 @@ public class MessagingNode {
     public long messagesReceivedSum = 0;
 
     TCPServerThread server;
-    Thread serverThread;
 
     int messagesRelayed = 0;    
 
@@ -57,7 +57,8 @@ public class MessagingNode {
      Djikstra djikstra;
 
      MsgNodeCLI cli;
-     Thread cliThread;
+
+
 
     public static void main(String[] args) throws IOException, InterruptedException {
         self = new MessagingNode();
@@ -83,12 +84,12 @@ public class MessagingNode {
         
         //System.out.println("Messaging node creting server thread listing on IP " + serverSocket.getInetAddress().getLocalHost().getHostAddress() + " and port " + serverSocket.getLocalPort());
         server = new TCPServerThread(serverSocket, this);
-        serverThread = new Thread(server);
+        Thread serverThread = new Thread(server);
         serverThread.start();
 
         cli = new MsgNodeCLI(self);
-        cliThread = new Thread(cli);
-        cliThread.start();
+         Thread cliThread = new Thread(cli);
+         cliThread.start();
 
         //messagingnodes need serverthreads too (to listen to for connections between other messagingNodes)
     }
@@ -178,7 +179,7 @@ public class MessagingNode {
         return IP;
     }
 
-    public void initiateTask(int rounds) {
+    public synchronized void initiateTask(int rounds) {
         //im going to assume that every round is five messages
         //calculate all the paths
         djikstra = new Djikstra(routeCache, masterList); //now cache has all of my routes
@@ -191,12 +192,12 @@ public class MessagingNode {
                 try {  
                     
                     RegisteredNode sink = getRandomNode(); //gets from the masterlist which is what the cache uses
-                   // System.out.println("DEBUG: sink th`at was found is = " + sink.ip + ":" + sink.portNum);
+                   // System.out.println("DEBUG: sink that was found is = " + sink.ip + ":" + sink.portNum);
                     CacheObject route = routeCache.findForMessaging(sink);
                    // System.out.println("just got this route " + route);
                     String routeString = routeCache.convertRouteToString(route);
-                    //System.out.println("route string = " + routeString);
-                    routeString = routeString.replace("~", " ");
+                   // System.out.println("route string = " + routeString);
+                    routeString = routeString.replace("-", " ");
                    
                     String[] routeArr = routeString.split(" ");
                     //index 0 is you, index 1 is the weight, index 2 is what you want
@@ -211,11 +212,8 @@ public class MessagingNode {
                     byte[] message = msg.setBytes();
                     TCPSender sender = new TCPSender(neighborToSend.socket);
                     sender.sendData(message);
-                    synchronized(this) {
-                        messagesSent+=1;
-                        messagesSentSum += payload;
-                    }
-                    
+                    messagesSent+=1;
+                    messagesSentSum += payload;
                     
 
                 } catch(IOException ioe) {
@@ -275,13 +273,14 @@ public class MessagingNode {
         DeregisterRequest request = new DeregisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] marshalledRequest = request.setBytes();
         sender.sendData(marshalledRequest);
-       
-           
-            //server.toggleDone(); //might not work, might force interuptions
-            //cli.toggleDone();
-            //cliThread.interrupt();
-            //System.exit(0);
-        
+        try {
+            Thread.sleep(2000);
+            server.toggleDone();
+            cli.toggleDone();
+            System.exit(0);
+        } catch(InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public synchronized void sendTrafficSummary() {
@@ -396,11 +395,14 @@ public class MessagingNode {
     public synchronized void processMessage(String route, int payload) {
         //first need to check if you are the sink
         String[] routeArr = route.split(" ");
+        System.out.println(route);
         if(routeArr.length == 1) {
             messagesReceived+=1;
             messagesReceivedSum+=payload;
             //you are the sink
         } else {
+            //split into an array
+           
             //the node we need to send to is at index 0 in our array
             try {
            // System.out.println("FINDING ROUTING NODE WITH " + routeArr[2]);
@@ -422,29 +424,4 @@ public class MessagingNode {
 
     }
 
-    public void removeFailedNode(RegisteredNode failedNode) {
-        System.out.println("removing failed node");
-        masterList.remove(failedNode);
-        try {
-            RegisteredNode neighborCheck = findNodeToSendTo(failedNode.ip + ":" + failedNode.portNum);
-            if(neighborCheck != null) {
-                peerNodes.remove(neighborCheck);
-            }
-        } catch(IOException ioe) {
-            System.out.println(ioe.getMessage());
-        }
-
-        if(failedNode.equals(registryConnectionNode)) {
-            System.out.println("Registry has unexpectedly broke connection... Shutting down.");
-            shutDown();
-        }
-    }
-    
-    public void shutDown() {
-        serverThread.interrupt();
-        cliThread.interrupt();
-        registryConnectionNode.stopReceiver();
-        System.out.println("Shut down complete.");
-        System.exit(0);
-    }
 }
