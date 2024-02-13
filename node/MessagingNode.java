@@ -13,7 +13,6 @@ import csx55.overlay.dijkstra.*;
 import csx55.overlay.dijkstra.Cache.CacheObject;
 import csx55.overlay.transport.TCPSender;
 import csx55.overlay.transport.TCPServerThread;
-import csx55.overlay.util.InputHandler;
 import csx55.overlay.util.MsgNodeCLI;
 import csx55.overlay.util.OverlayCreator;
 import csx55.overlay.wireformats.*;
@@ -179,7 +178,7 @@ public class MessagingNode {
         return IP;
     }
 
-    public synchronized void initiateTask(int rounds) {
+    public void initiateTask(int rounds) {
         //im going to assume that every round is five messages
         //calculate all the paths
         djikstra = new Djikstra(routeCache, masterList); //now cache has all of my routes
@@ -192,11 +191,11 @@ public class MessagingNode {
                 try {  
                     
                     RegisteredNode sink = getRandomNode(); //gets from the masterlist which is what the cache uses
-                   // System.out.println("DEBUG: sink that was found is = " + sink.ip + ":" + sink.portNum);
+                   // System.out.println("DEBUG: sink th`at was found is = " + sink.ip + ":" + sink.portNum);
                     CacheObject route = routeCache.findForMessaging(sink);
                    // System.out.println("just got this route " + route);
                     String routeString = routeCache.convertRouteToString(route);
-                    System.out.println("route string = " + routeString);
+                    //System.out.println("route string = " + routeString);
                     routeString = routeString.replace("~", " ");
                    
                     String[] routeArr = routeString.split(" ");
@@ -212,8 +211,11 @@ public class MessagingNode {
                     byte[] message = msg.setBytes();
                     TCPSender sender = new TCPSender(neighborToSend.socket);
                     sender.sendData(message);
-                    messagesSent+=1;
-                    messagesSentSum += payload;
+                    synchronized(this) {
+                        messagesSent+=1;
+                        messagesSentSum += payload;
+                    }
+                    
                     
 
                 } catch(IOException ioe) {
@@ -370,7 +372,6 @@ public class MessagingNode {
     }
 
     private RegisteredNode findNodeToSendTo(String ipPort) throws UnknownHostException {
-        System.out.println("IP PORT = " + ipPort);
         String IP = InetAddress.getByName(parseIPAddress(ipPort)).getHostAddress();
         int port = parsePortNumber(ipPort);
         RegisteredNode neighborToSend = null;
@@ -395,7 +396,6 @@ public class MessagingNode {
     public synchronized void processMessage(String route, int payload) {
         //first need to check if you are the sink
         String[] routeArr = route.split(" ");
-        System.out.println(route);
         if(routeArr.length == 1) {
             messagesReceived+=1;
             messagesReceivedSum+=payload;

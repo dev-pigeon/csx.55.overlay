@@ -210,10 +210,9 @@ public class Registry {
         } else {
             //only send messages for failure, just unadd the node now
             //shut em down boys
-            generateDeregisterResponse(node, "Success", 1);
-            System.out.println("beginning shutdown");
             node.stopReceiver();
             registeredNodes.remove(node);
+            generateDeregisterResponse(node, "Success", 1);
         }
 
         
@@ -291,7 +290,6 @@ public class Registry {
     }
 
     public void removeFailedNode(RegisteredNode failedNode) {
-        System.out.println("removing the failed node");
         registeredNodes.remove(failedNode);
     }
 }

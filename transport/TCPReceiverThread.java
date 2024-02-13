@@ -62,16 +62,15 @@ public class TCPReceiverThread implements Runnable {
                 break;
             } catch(IOException ioe) {
                 if(owner instanceof Registry) {
-                    ((Registry)owner).removeFailedNode(node);
+                    //((Registry)owner).removeFailedNode(node);
                 } else {
-                    ((MessagingNode)owner).removeFailedNode(node);
+                    //((MessagingNode)owner).removeFailedNode(node);
                 }
                 break;
             }
         } 
 
         if(socket != null) {
-            System.out.println("closing socket");
             closeSocket();
         }
     }
