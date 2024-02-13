@@ -58,11 +58,15 @@ public class TCPReceiverThread implements Runnable {
                 System.out.println(se.getMessage());
                 break;
             } catch(IOException ioe) {
-                System.out.println(ioe.getMessage());
+                if(owner instanceof Registry) {
+                    ((Registry)owner).removeFailedNode(node);
+                } else if(owner instanceof MessagingNode) {
+                    ((MessagingNode)owner).removeFailedNode(node);
+                }
                 break;
             }
         } 
-        System.out.println("SOCKET WAS NULL?");
+       
     }
 
     public static int readType(byte[] marshalledMessage) throws IOException {

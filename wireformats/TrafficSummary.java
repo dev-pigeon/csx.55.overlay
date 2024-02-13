@@ -78,8 +78,6 @@ public class TrafficSummary implements Event {
         numSent = din.readInt();
         numReceived = din.readInt();
         numRelayed = din.readInt();
-        System.out.println("my num relayed = " + numRelayed);
-
         sumSent = din.readLong();
         sumReceived = din.readLong();
 

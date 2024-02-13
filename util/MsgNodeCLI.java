@@ -35,7 +35,7 @@ public class MsgNodeCLI implements Runnable {
             //call some stuff in MessagingNode
         } else if(message.equals("exit-overlay")) {
             msgNode.sendDeregisterRequest();
-        } else if(message.equals("list-weights")) {
+        } else if(message.equals("print-shortest-path")) {
             msgNode.listWeights();
         } else if(message.equals("test-djikstra")) {
             msgNode.testDjikstra();

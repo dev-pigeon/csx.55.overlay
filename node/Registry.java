@@ -273,4 +273,11 @@ public class Registry {
         Djikstra djikstra = new Djikstra(cache, registeredNodes);
         djikstra.findAllRoutes(registeredNodes.get(1));
     }
+
+    public void removeFailedNode(RegisteredNode node) {
+        System.out.println("removing failed node");
+        registeredNodes.remove(node);
+        System.out.println("size of list " + registeredNodes.size());
+    }
+    
 }

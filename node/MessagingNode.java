@@ -214,8 +214,6 @@ public class MessagingNode {
                     sender.sendData(message);
                     messagesSent+=1;
                     messagesSentSum += payload;
-                    
-
                 } catch(IOException ioe) {
 
                 }
@@ -267,8 +265,6 @@ public class MessagingNode {
 
     }
 
-
-
     public void sendDeregisterRequest() throws IOException {
         DeregisterRequest request = new DeregisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] marshalledRequest = request.setBytes();
@@ -318,19 +314,8 @@ public class MessagingNode {
         
     }
 
-    public void listWeights() {
-       
-            for(RegisteredNode entry : peerNodes.keySet()) {
-                System.out.print(entry.portNum + " ");
-            }
-
-            
-            System.out.println();
-
-            for(int i = 0; i < masterList.size(); ++i) {
-                System.out.println(masterList.get(i).portNum);
-            }
-        
+    public void listWeights() throws UnknownHostException {
+       routeCache.displayCachedRoutes();
     }
 
     private RegisteredNode findNode(RegisteredNode node) {
@@ -421,6 +406,16 @@ public class MessagingNode {
             }
         }
 
+    }
+
+    public void removeFailedNode(RegisteredNode nodeFailed) {
+        if(nodeFailed.equals(registryConnectionNode)) {
+            System.out.println("ERROR: Lost connection with registry, terminating process...");
+            //shutDown()
+            System.exit(0);
+        } else {
+            System.out.println("failed and was not registry");
+        }
     }
 
 }
