@@ -30,6 +30,8 @@ public class MessagingNode {
     public int messagesReceived = 0;
     public long messagesReceivedSum = 0;
 
+    TCPServerThread server;
+
     int messagesRelayed = 0;    
 
     private static InetAddress regInetAddress;
@@ -53,6 +55,8 @@ public class MessagingNode {
      Cache routeCache = new Cache();
 
      Djikstra djikstra;
+
+     MsgNodeCLI cli;
 
 
 
@@ -79,11 +83,11 @@ public class MessagingNode {
 
         
         //System.out.println("Messaging node creting server thread listing on IP " + serverSocket.getInetAddress().getLocalHost().getHostAddress() + " and port " + serverSocket.getLocalPort());
-        TCPServerThread server = new TCPServerThread(serverSocket, this);
+        server = new TCPServerThread(serverSocket, this);
         Thread serverThread = new Thread(server);
         serverThread.start();
 
-         MsgNodeCLI cli = new MsgNodeCLI(self);
+        cli = new MsgNodeCLI(self);
          Thread cliThread = new Thread(cli);
          cliThread.start();
 
@@ -175,7 +179,7 @@ public class MessagingNode {
         return IP;
     }
 
-    public void initiateTask(int rounds) {
+    public synchronized void initiateTask(int rounds) {
         //im going to assume that every round is five messages
         //calculate all the paths
         djikstra = new Djikstra(routeCache, masterList); //now cache has all of my routes
@@ -188,38 +192,39 @@ public class MessagingNode {
                 try {  
                     
                     RegisteredNode sink = getRandomNode(); //gets from the masterlist which is what the cache uses
-                    System.out.println("DEBUG: sink that was found is = " + sink.ip + ":" + sink.portNum);
+                   // System.out.println("DEBUG: sink that was found is = " + sink.ip + ":" + sink.portNum);
                     CacheObject route = routeCache.findForMessaging(sink);
-                    System.out.println("just got this route " + route);
+                   // System.out.println("just got this route " + route);
                     String routeString = routeCache.convertRouteToString(route);
-                    System.out.println("route string = " + routeString);
-                    routeString = routeString.replace("-", " ");
-                    System.out.println("route string after replacing " + routeString);
+                   // System.out.println("route string = " + routeString);
+                    routeString = routeString.replace("~", " ");
+                   
                     String[] routeArr = routeString.split(" ");
                     //index 0 is you, index 1 is the weight, index 2 is what you want
-                    for(int x = 0; x < routeArr.length; ++x) {
-                        System.out.print(routeArr[x] + " ");
-                    }
-                    System.out.println();
+                    
+                    //System.out.println();
 
                     RegisteredNode neighborToSend = findNodeToSendTo(routeArr[2]);
 
                     String routeToSend = routeArrToString(2, routeArr);
+                   // System.out.println("SENDING ROUTE TO SEND " + routeToSend);
                     Message msg = new Message(payload, routeToSend);
                     byte[] message = msg.setBytes();
                     TCPSender sender = new TCPSender(neighborToSend.socket);
                     sender.sendData(message);
-                    self.messagesSent+=1;
-                    self.messagesSentSum += payload;
+                    messagesSent+=1;
+                    messagesSentSum += payload;
+                    
+
                 } catch(IOException ioe) {
 
                 }
             }
         }
         try {
-            Thread.sleep(1500);
+            Thread.sleep(5000);
             //System.out.println("sending task complete");
-            self.sendTaskComplete();
+            sendTaskComplete();
         } catch (InterruptedException | IOException e) {
             // TODO Auto-generated catch block
             System.out.println(e.getMessage());
@@ -251,54 +256,36 @@ public class MessagingNode {
                 selectedNode = masterList.get(index);
                 if(!selectedNode.ip.equals(InetAddress.getLocalHost().getHostAddress()) || selectedNode.portNum != serverPort) {
                     break;
-                }
+                } 
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
         }
 
-        for(RegisteredNode entry : peerNodes.keySet()) {
-            if(entry.ip.equals(selectedNode.ip) && entry.portNum == selectedNode.portNum) {
-                return entry;
-            }
-        }
-        return selectedNode; //this will never return from here
+
+        return selectedNode; 
 
     }
 
-    /*  the implementation below will work when we have djkikstras written 
-    public int getRandomIndex() { 
-        Random rand = new Random();
-        int index = -1;
-    
-        while(true) {
-            index = rand.nextInt(masterList.size());
-            
-            try {
-                RegisteredNode selectedNode = masterList.get(index);
-                if(!selectedNode.ip.equals(InetAddress.getLocalHost().getHostAddress()) || selectedNode.portNum != serverPort) {
-                    System.out.println("returning item with IP =  " + selectedNode.ip + " and their port = " + selectedNode.portNum);
-                    break;
-                }
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-        }
-        return index;
-    }
-    */
-    
+
+
     public void sendDeregisterRequest() throws IOException {
         DeregisterRequest request = new DeregisterRequest(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] marshalledRequest = request.setBytes();
         sender.sendData(marshalledRequest);
+        try {
+            Thread.sleep(2000);
+            System.exit(0);
+        } catch(InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public synchronized void sendTrafficSummary() {
         //System.out.println("ive been asked for my summary and I am sending it");
         TrafficSummary summary = null;
         try {
-            summary = new TrafficSummary(self.messagesSent, self.messagesReceived, self.messagesSentSum, self.messagesReceivedSum);
+            summary = new TrafficSummary(messagesSent, messagesReceived, messagesRelayed, messagesSentSum, messagesReceivedSum);
             byte[] marshalledSummary = summary.setBytes();
             sender = new TCPSender(registrySocket);
             sender.sendData(marshalledSummary);
@@ -308,16 +295,10 @@ public class MessagingNode {
         }
     }
 
-    private void sendTaskComplete() throws IOException {
+    private synchronized void sendTaskComplete() throws IOException {
         TaskComplete message = new TaskComplete(InetAddress.getLocalHost().getHostAddress(), serverPort);
         byte[] marshalledMessage = message.setBytes();
         sender.sendData(marshalledMessage);
-    }
-
-    public synchronized void incrementReceivedStats(long payload) {
-        messagesReceived+=1;
-        messagesReceivedSum+=payload;
-       // System.out.println("my sum is " + messagesReceivedSum);
     }
 
     public void linkWeightProtocol(RegisteredNode nodeOne, RegisteredNode nodeTwo, int weight, int numLeft) throws UnknownHostException {//IP and ports are good here
@@ -388,15 +369,11 @@ public class MessagingNode {
     }
 
     private RegisteredNode findNodeToSendTo(String ipPort) throws UnknownHostException {
-        System.out.println("IP PORT = " + ipPort);
         String IP = InetAddress.getByName(parseIPAddress(ipPort)).getHostAddress();
-        System.out.println("IP AFTER PASRSING " + IP);
         int port = parsePortNumber(ipPort);
-        System.out.println("PORT AFTER PARSING " + port);
         RegisteredNode neighborToSend = null;
         for(RegisteredNode entry : peerNodes.keySet()) {
             if(entry.ip.equals(IP) && entry.portNum == port) {
-                System.out.println("FOUND");
                 neighborToSend = entry;
                 break;
             }
@@ -408,11 +385,42 @@ public class MessagingNode {
         StringBuilder sb = new StringBuilder();
 
         for(int i = offset; i < routeArr.length; ++i) {
-            sb.append(routeArr[i]);
+            sb.append(routeArr[i] + " ");
         }
         return sb.toString();
     }
 
-    
+    public synchronized void processMessage(String route, int payload) {
+        //first need to check if you are the sink
+        String[] routeArr = route.split(" ");
+       // System.out.println(route);
+        if(routeArr.length == 1) {
+            
+            messagesReceived+=1;
+            messagesReceivedSum+=payload;
+            //you are the sink
+        } else {
+            //split into an array
+           
+            //the node we need to send to is at index 0 in our array
+            try {
+           // System.out.println("FINDING ROUTING NODE WITH " + routeArr[2]);
+            RegisteredNode routingNode = findNodeToSendTo(routeArr[2]);
+            String routeToSend = routeArrToString(2, routeArr);
+
+            Message msg = new Message(payload, routeToSend);
+            byte[] marshalledMessage = msg.setBytes();
+
+            //System.out.println("ROUTING MESSAGE " + routeToSend);
+
+            TCPSender sender = new TCPSender(routingNode.socket); 
+            sender.sendData(marshalledMessage);
+            messagesRelayed +=1;
+            } catch(IOException ioe) {
+                System.out.println(ioe.getMessage());
+            }
+        }
+
+    }
 
 }

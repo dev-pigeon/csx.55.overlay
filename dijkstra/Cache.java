@@ -31,7 +31,7 @@ public class Cache {
         for(int i = 0; i < cachedRoutes.size(); ++i) {
             //check if the last index of cacheObject.from is equal to the target, if so break 
             int positionToCheck = cachedRoutes.get(i).cachedRouteObject.size() - 1;
-            System.out.println("position to check .to node = " + cachedRoutes.get(i).cachedRouteObject.get(positionToCheck).to.portNum);
+          //  System.out.println("position to check .to node = " + cachedRoutes.get(i).cachedRouteObject.get(positionToCheck).to.portNum);
             if(cachedRoutes.get(i).cachedRouteObject.get(positionToCheck).to.equals(target)) {
                 cachedRoute = cachedRoutes.get(i);
                 break;
@@ -45,9 +45,9 @@ public class Cache {
         for(int i = 0; i < cachedRoutes.size(); ++i) {
             //check if the last index of cacheObject.from is equal to the target, if so break 
             int positionToCheck = cachedRoutes.get(i).cachedRouteObject.size() - 1;
-            System.out.println("position to check .to node = " + cachedRoutes.get(i).cachedRouteObject.get(positionToCheck).to.portNum);
+           // System.out.println("position to check .to node = " + cachedRoutes.get(i).cachedRouteObject.get(positionToCheck).to.portNum);
             if(cachedRoutes.get(i).cachedRouteObject.get(positionToCheck).to.ip.equals(target.ip) && cachedRoutes.get(i).cachedRouteObject.get(positionToCheck).to.portNum == target.portNum) {
-                System.out.println("FOUND");
+               // System.out.println("FOUND");
                 cachedRoute = cachedRoutes.get(i);
                 break;
             }
@@ -59,10 +59,10 @@ public class Cache {
 
     public String convertRouteToString(CacheObject route) throws UnknownHostException {
         StringBuilder sb = new StringBuilder();
-        System.out.println("converting route");
+        //System.out.println("converting route");
         PathObject firstElem = route.cachedRouteObject.get(0);
-        String firstElemString = InetAddress.getByName(firstElem.from.ip).getHostName() + ":" + Integer.toString(firstElem.from.portNum) + "-" + Integer.toString(firstElem.weight) + "-" + InetAddress.getByName(firstElem.to.ip).getHostName() + ":" + Integer.toString(firstElem.to.portNum);
-        System.out.println("something is null?");
+        String firstElemString = InetAddress.getByName(firstElem.from.ip).getHostName() + ":" + Integer.toString(firstElem.from.portNum) + "~" + Integer.toString(firstElem.weight) + "~" + InetAddress.getByName(firstElem.to.ip).getHostName() + ":" + Integer.toString(firstElem.to.portNum);
+       // System.out.println("something is null?");
         sb.insert(0, firstElemString);
         for(int i = 1; i < route.cachedRouteObject.size(); ++i) {
             String tempStr = buildPathString(route.cachedRouteObject.get(i));
@@ -114,7 +114,7 @@ public class Cache {
         ArrayList<PathObject> cachedRouteObject;
         public CacheObject(Stack<PathObject> cacheObjectIn) {
             this.cachedRouteObject = new ArrayList<>(cacheObjectIn);
-            System.out.println(cachedRouteObject.toString());
+            //System.out.println(cachedRouteObject.toString());
         }
     }
 }

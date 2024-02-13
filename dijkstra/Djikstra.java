@@ -44,7 +44,7 @@ public class Djikstra {
      */
     public void findAllRoutes(RegisteredNode startNode) {
         RegisteredNode current = findStartPoint(startNode);
-        System.out.println("my start node has a port number of " + current.portNum);
+       // System.out.println("my start node has a port number of " + current.portNum);
         this.startNode = current;
         //create pool objects
         visitNodeProtocol(current);
