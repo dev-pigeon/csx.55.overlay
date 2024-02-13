@@ -45,11 +45,6 @@ public class Message implements Event{
         dout.writeInt(type);
         dout.writeInt(payload);
 
-        byte[] messageBytes = route.getBytes();
-        int elementLengh = messageBytes.length;
-        dout.writeInt(elementLengh);
-        dout.write(messageBytes);
-
         dout.flush();
 
         marshalledData = baOutputStream.toByteArray();
@@ -67,11 +62,6 @@ public class Message implements Event{
         type = din.readInt();
         payload = din.readInt();
 
-        int elemLength = din.readInt();
-        byte[] messageBytes = new byte[elemLength];
-        din.readFully(messageBytes);
-        route = new String(messageBytes);
-
         bArrayInputStream.close();
         din.close();
     }
@@ -79,7 +69,7 @@ public class Message implements Event{
     @Override
     public void handleEvent(Object owner, RegisteredNode node) {
         if(owner instanceof MessagingNode) {
-              ((MessagingNode)owner).processMessage(route, payload);
+              ((MessagingNode)owner).incrementReceivedStats(payload);
         } 
     }
     
